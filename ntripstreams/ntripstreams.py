@@ -10,8 +10,10 @@ import urllib.parse
 import base64
 import time
 
+from __version__ import __version__
 
-CLIENTVERSION = 0.1
+
+CLIENTVERSION = __version__
 CLIENTNAME = f'Bedrock Solutions NtripClient/{CLIENTVERSION}'
 
 
