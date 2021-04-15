@@ -8,7 +8,6 @@
 import asyncio
 import urllib.parse
 import base64
-import sys
 import time
 
 
@@ -32,18 +31,21 @@ def getNtripStreamHeader(casterUrl: str, ntripMountPoint: str,
                          ntripUser: str, ntripPassword: str) -> str:
     casterUrl = urllib.parse.urlsplit(casterUrl)
     ntripVersion = 2.0
-    ntripAuth = base64.b64encode((ntripUser + ':' + 
-                                  ntripPassword).encode('ISO-8859-1')).decode()
+    
     if ntripUser and ntripPassword:
+        ntripAuth = base64.b64encode((ntripUser + ':' + 
+                    ntripPassword).encode('ISO-8859-1')).decode()
         ntripAuthStr = f'Authorization: Basic {ntripAuth}\r\n'
+    else:
+        ntripAuthStr = ''
 
-    header = ((f'GET /{ntripMountPoint} HTTP/1.1\r\n'
+    header = (f'GET /{ntripMountPoint} HTTP/1.1\r\n'
               f'Host: {casterUrl.geturl()}\r\n'
               f'Ntrip-Version: Ntrip/{ntripVersion}\r\n'
-              f'User-Agent: NTRIP {CLIENTNAME}\r\n')
-             + ntripAuthStr
-             + (f'Connection: close\r\n'
-                f'\r\n')).encode('ISO-8859-1')
+              f'User-Agent: NTRIP {CLIENTNAME}\r\n'
+              + ntripAuthStr +
+              'Connection: close\r\n'
+              '\r\n').encode('ISO-8859-1')
     return header
 
 async def getNtripSourcetable(casterUrl):
