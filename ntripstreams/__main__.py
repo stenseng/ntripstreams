@@ -14,7 +14,7 @@ def main():
     import sys
     
     argc = len(sys.argv)
-    print('Args:\n', argc, sys.argv)
+
     if argc == 1:
         header = getServerHeader('http://gnsscaster.dk', 'PIP', 
                                  'otto', 'tystys', 2)
@@ -24,19 +24,19 @@ def main():
                                  'otto', 'tystys', 1)
         for line in header.decode().split('\r\n'):
             print(f'{time():.6f}: Serv header > {line}')
-    if argc > 1:
+    elif argc == 2:
         url = sys.argv[1]
         asyncio.run(getNtripSourcetable(url))
-    else: 
-        exit(-1)
-    if argc > 4:
+    elif argc == 3:
+        url = sys.argv[1]
+        stn = sys.argv[2]
+        asyncio.run(getNtripStream(url, stn))
+    elif argc == 5:
+        url = sys.argv[1]
         stn = sys.argv[2]
         user = sys.argv[3]
         passwd = sys.argv[4]
         asyncio.run(getNtripStream(url, stn, user, passwd))
-    elif argc > 2:
-        stn = sys.argv[2]
-        asyncio.run(getNtripStream(url, stn))
 
 
 if __name__ == '__main__':
