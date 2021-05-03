@@ -9,7 +9,8 @@ import asyncio
 import urllib.parse
 import base64
 from time import time, strftime, gmtime
-from bitstring import ConstBitArray, BitStream
+from bitstring import Bits, BitStream
+from crc import crc24bit, crclut
 
 from __version__ import __version__
 
@@ -129,7 +130,8 @@ async def getNtripSourcetable(casterUrl: str):
     print(f'{time():.6f}: Header sent.')
 
     ntripResponceSourcetable = []
-    ntripResponceHeader, ntripStatusCode = await getNtripResponceHeader(reader) 
+    ntripResponceHeader, ntripStatusCode, ntripResponceHeaderTimestamp\
+         = await getNtripResponceHeader(reader) 
     if ntripStatusCode != '200':
         print(f'Error! {ntripStatusCode}')
         for line in ntripResponceHeader:
@@ -152,9 +154,7 @@ async def getNtripSourcetable(casterUrl: str):
  
            
 async def getNtripStream(casterUrl: str, station:str, 
-                         user: str=None, passwd=None):
-    rtcm3Preample = ConstBitArray('0b11010011')
-    rtcm3FrameFormat = 'hex:8, bin:6, uint:10'
+                         user: str=None, passwd: str=None):
     
     casterUrl = urllib.parse.urlsplit(casterUrl)
     if casterUrl.scheme == 'https':
@@ -166,30 +166,59 @@ async def getNtripStream(casterUrl: str, station:str,
         reader, writer = await asyncio.open_connection(
             casterUrl.hostname, casterUrl.port)
     print(f'{time():.6f}: Connection open. Ready to write.')
-    
     header = getNtripStreamHeader(casterUrl.geturl(), station, user, passwd)
     writer.write(header)
     await writer.drain()
     print(f'{time():.6f}: Header sent.')
-    
     ntripResponceHeader, ntripStatusCode, ntripResponceHeaderTimestamp \
-        = await getNtripResponceHeader(reader) 
-    if ntripStatusCode == '200':
-        
-        for count in range(0, 10):
-            rawLine = await reader.readuntil(b'\r\n')
-            length = int(rawLine[:-2].decode('ISO-8859-1'), 16)
+        = await getNtripResponceHeader(reader)
+    
+    rtcm3FramePreample = Bits(bin='0b11010011')
+    rtcm3FrameHeader = 'bin:8, pad:6, uint:10'
 
+    if ntripStatusCode == '200':
+        if 'Transfer-Encoding: chunked' in ntripResponceHeader:
+            print('Stream is chunked')
+            ntripStreamChunked = True
+        else:
+            ntripStreamChunked = False
+        rtcmFramePreample = False
+        rtcmFrameAligned = False
+        rtcmFrameBuffer = BitStream()
+        while True:
+            if ntripStreamChunked:
+                rawLine = await reader.readuntil(b'\r\n')
+                length = int(rawLine[:-2].decode('ISO-8859-1'), 16)
             rawLine = await reader.readuntil(b'\r\n')
-            rtcmBytes = BitStream(rawLine[:-2])
-            print(f'{time():.6f}: chunk {int(rtcmBytes.length / 8)}:{length}')
-            # print(f'{time():.6f}: data {len(rawLine)}:{length}> {bitLine.hex}')
-            # print(rtcmBytes.unpack(rtcm3FrameFormat))
-            rtcmFramePos = rtcmBytes.find(rtcm3Preample, bytealigned=True)
-            if rtcmFramePos:
-                rtcmFrameTemp = rtcmBytes[rtcmFramePos[0]:]
-                preample, padding, size = rtcmFrameTemp.unpack(rtcm3FrameFormat)
-                print(preample, padding, size)
+            receivedBytes = BitStream(rawLine[:-2])
+            print(f'{time():.6f}: chunk {receivedBytes.length}:{length * 8}')
+            if ntripStreamChunked and receivedBytes.length != length * 8:
+                print('Chunk incomplete.\n Closing connection!')
+                break
+      
+            rtcmFrameBuffer += receivedBytes
+            if not rtcmFrameAligned:
+                rtcmFramePos = rtcmFrameBuffer.find(rtcm3FramePreample, 
+                                                       bytealigned=True)
+                if rtcmFramePos:
+                    rtcmFrameBuffer = rtcmFrameBuffer[rtcmFramePos[0]:]
+                    rtcmFramePreample = True
+                else:
+                    rtcmFrameBuffer = BitStream()           
+            if rtcmFramePreample and rtcmFrameBuffer.length >= 48:
+                (rtcmPreAmple, rtcmPayloadLength) \
+                    = rtcmFrameBuffer.peeklist(rtcm3FrameHeader)
+                # print(f'Frame length: {rtcmFrameBuffer.length}.'
+                #       f' Payloadlength: {rtcmPayloadLength}')
+                if rtcmFrameBuffer.length >= ((rtcmPayloadLength + 6) * 8):
+                    print(f'Frame length: {rtcmFrameBuffer.length}.'
+                          f' Payloadlength: {rtcmPayloadLength * 8}')
+                    rtcmFrame = rtcmFrameBuffer[:(rtcmPayloadLength + 6) * 8]
+                    calcCrc = crc24bit(rtcmFrame[:-24], crclut)
+                    print(f'  Calculated CRC: {hex(calcCrc)} '
+                          f'   frame CRC {rtcmFrame[-24:]}')
+                    rtcmFrameBuffer \
+                        = rtcmFrameBuffer[(rtcmPayloadLength + 6) * 8:]
     else:
         print(f'Error! {ntripStatusCode}')
         for line in ntripResponceHeader:
