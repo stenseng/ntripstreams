@@ -10,7 +10,7 @@ import urllib.parse
 import base64
 from time import time, strftime, gmtime
 from bitstring import Bits, BitStream
-from crc import crc24bit, crclut
+from crc import crc24bit
 
 from __version__ import __version__
 
@@ -191,9 +191,10 @@ async def getNtripStream(casterUrl: str, station:str,
                 length = int(rawLine[:-2].decode('ISO-8859-1'), 16)
             rawLine = await reader.readuntil(b'\r\n')
             receivedBytes = BitStream(rawLine[:-2])
-            print(f'{time():.6f}: chunk {receivedBytes.length}:{length * 8}')
             if ntripStreamChunked and receivedBytes.length != length * 8:
                 print('Chunk incomplete.\n Closing connection!')
+                print(f'{time():.6f}: ' +
+                      f'Chunk {receivedBytes.length}:{length * 8}')
                 break
       
             rtcmFrameBuffer += receivedBytes
@@ -208,17 +209,27 @@ async def getNtripStream(casterUrl: str, station:str,
             if rtcmFramePreample and rtcmFrameBuffer.length >= 48:
                 (rtcmPreAmple, rtcmPayloadLength) \
                     = rtcmFrameBuffer.peeklist(rtcm3FrameHeader)
-                # print(f'Frame length: {rtcmFrameBuffer.length}.'
-                #       f' Payloadlength: {rtcmPayloadLength}')
                 if rtcmFrameBuffer.length >= ((rtcmPayloadLength + 6) * 8):
-                    print(f'Frame length: {rtcmFrameBuffer.length}.'
-                          f' Payloadlength: {rtcmPayloadLength * 8}')
                     rtcmFrame = rtcmFrameBuffer[:(rtcmPayloadLength + 6) * 8]
-                    calcCrc = crc24bit(rtcmFrame[:-24], crclut)
-                    print(f'  Calculated CRC: {hex(calcCrc)} '
-                          f'   frame CRC {rtcmFrame[-24:]}')
-                    rtcmFrameBuffer \
-                        = rtcmFrameBuffer[(rtcmPayloadLength + 6) * 8:]
+                    calcCrc = crc24bit(rtcmFrame[:-24])
+                    frameCrc = rtcmFrame[-24:].unpack('uint:24')
+                    if calcCrc == frameCrc[0]:
+                        rtcmFrameAligned = True
+                        rtcmFrameBuffer \
+                            = rtcmFrameBuffer[(rtcmPayloadLength + 6) * 8:]
+                        print('CRC OK!')
+                        rtcmMessesageNo = rtcmFrame.peeklist('pad:24, uint:12') 
+                        print(f'  {time():.6f}: ' +
+                              f'RTCM message number: {rtcmMessesageNo[0]} ' +
+                              f'Payloadlength: {rtcmPayloadLength * 8}')
+                    else:
+                        rtcmFrameAligned = False
+                        rtcmFrameBuffer = rtcmFrameBuffer[8:]
+                        print('!!! Warning CRC mismatch realigning stream !!!')
+                        print(f'  {time():.6f}: ' +
+                              f'   CRC: {hex(calcCrc)} {rtcmFrame[-24:]}')
+
+                    
     else:
         print(f'Error! {ntripStatusCode}')
         for line in ntripResponceHeader:
