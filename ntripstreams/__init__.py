@@ -1,1 +1,2 @@
-from .ntripstreams import *
+from ntripstreams import NtripStream
+# from .ntripstreams import *

@@ -7,7 +7,6 @@
 
 import asyncio
 from time import time
-#from ntripstreams import getServerHeader, getNtripSourcetable, getNtripStream
 from ntripstreams import NtripStream
 
 def main():

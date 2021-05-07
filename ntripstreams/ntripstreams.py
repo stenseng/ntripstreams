@@ -11,16 +11,13 @@ import base64
 from time import time, strftime, gmtime
 from bitstring import Bits, BitStream
 from crc import crc24q
+from rtcm3 import rtcm3
 
 from __version__ import __version__
 
 class NtripStream:
 
     def __init__(self):
-        # , casterUrl: str=None, ntripMountPoint: str=None, 
-        #          ntripUser: str=None, ntripPassword: str=None,
-        #          nmeaGga: str=None):
-        
         self.__CLIENTVERSION = __version__
         self.__CLIENTNAME = ('Bedrock Solutions NtripClient/'
                              + f'{self.__CLIENTVERSION}')
@@ -28,13 +25,26 @@ class NtripStream:
         self.ntripMountPoint = None
         self.ntripUser = None
         self.ntripPassword = None
+        self.ntripAuthStr = ''
         self.nmeaString = None
+        
+        self.ntripWriter = None
+        self.ntripReader = None
         self.rtcmFrameBuffer = BitStream()
+        self.rtcmMessage = rtcm3()
+
         
-    def openNtripConnection(self, casterUrl: str, ntripMountPoint: str=None, 
-                            ntripUser: str=None, ntripPassword: str=None,
-                            nmeaGga: str=None):
-        
+    async def openNtripConnection(self, casterUrl: str, 
+                                  ntripMountPoint: str=None, 
+                                  ntripUser: str=None, ntripPassword: str=None,
+                                  nmeaGga: str=None):
+        self.casterUrl = urlsplit(casterUrl)
+        if casterUrl.scheme == 'https':
+            self.ntripReader, self.ntripWriter = await asyncio.open_connection(
+                self.casterUrl.hostname, self.casterUrl.port, ssl=True)
+        else:
+            self.ntripReader, self.ntripWriter = await asyncio.open_connection(
+                self.casterUrl.hostname, self.casterUrl.port)
         return
     
     def getSourceTableHeader(self, casterUrl: str) -> str:
@@ -240,10 +250,13 @@ class NtripStream:
                             rtcmFrameBuffer \
                                 = rtcmFrameBuffer[(rtcmPayloadLength + 6) * 8:]
                             print('CRC OK!')
-                            rtcmMessesageNo = rtcmFrame.peeklist('pad:24, uint:12') 
+                            rtcmMessesageNo = rtcmFrame.peeklist('pad:24, uint:12')
+                            description = self.rtcmMessage.messageDescription[
+                                rtcmMessesageNo[0]]
                             print(f'  {time():.6f}: ' +
                                   f'RTCM message number: {rtcmMessesageNo[0]} ' +
-                                  f'Payloadlength: {rtcmPayloadLength * 8}')
+                                  f'\"{description}\". ' +
+                                  f'Payloadlength: {rtcmPayloadLength}')
                         else:
                             rtcmFrameAligned = False
                             rtcmFrameBuffer = rtcmFrameBuffer[8:]

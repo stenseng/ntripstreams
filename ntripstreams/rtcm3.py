@@ -10,7 +10,7 @@ Created on Fri May  7 11:15:55 2021
 class rtcm3():
     
     def __init__(self):
-        self.messageDescript = {
+        self.messageDescription = {
             1001: "L1-Only GPS RTK Observables", 
             1002: "Extended L1-Only GPS RTK Observables", 
             1003: "L1&L2 GPS RTK Observables", 
