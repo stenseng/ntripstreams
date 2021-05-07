@@ -10,7 +10,7 @@ http://ross.net/crc/download/crc_v3.txt
 
 # from bitstring import Bits, BitStream
 
-def crc24bit(data):
+def crc24q(data):
     """ 
     Calculate Qualcomm 24 bit cyclic redundancy check 
     
