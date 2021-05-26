@@ -9,20 +9,21 @@ import asyncio
 from time import time
 from ntripstreams import NtripStream
 
+
 def main():
     import sys
-    
+
     argc = len(sys.argv)
-    
+
     ntripstream = NtripStream()
 
     if argc == 1:
-        header = ntripstream.getServerHeader('http://gnsscaster.dk', 'PIP', 
-                                 'otto', 'tystys', 2)
+        header = ntripstream.getServerHeader('http://gnsscaster.dk', 'PIP',
+                                             'otto', 'tystys', 2)
         for line in header.decode().split('\r\n'):
             print(f'{time():.6f}: Serv header > {line}')
-        header = ntripstream.getServerHeader('http://gnsscaster.dk', 'PIP', 
-                                 'otto', 'tystys', 1)
+        header = ntripstream.getServerHeader('http://gnsscaster.dk', 'PIP',
+                                             'otto', 'tystys', 1)
         for line in header.decode().split('\r\n'):
             print(f'{time():.6f}: Serv header > {line}')
     elif argc == 2:
