@@ -6,6 +6,7 @@
 """
 
 import asyncio
+import logging
 from urllib.parse import urlsplit
 from base64 import b64encode
 from time import time, strftime, gmtime
@@ -48,7 +49,7 @@ class NtripStream:
             self.ntripReader, self.ntripWriter = await asyncio.open_connection(
                 self.casterUrl.hostname, self.casterUrl.port)
 
-    def setRequestSourceTableHeader(self, casterUrl: str) -> str:
+    def setRequestSourceTableHeader(self, casterUrl: str):
         self.casterUrl = urlsplit(casterUrl)
         timestamp = strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
         self.ntripRequestHeader = (f'GET / HTTP/1.1\r\n'
@@ -59,12 +60,11 @@ class NtripStream:
                                    f'Date: {timestamp}\r\n'
                                    f'Connection: close\r\n'
                                    f'\r\n').encode('ISO-8859-1')
-        return self.ntripRequestHeader
 
     def setRequestStreamHeader(self, casterUrl: str, ntripMountPoint: str,
                                ntripUser: str = None,
                                ntripPassword: str = None,
-                               nmeaString: str = None) -> str:
+                               nmeaString: str = None):
         self.casterUrl = urlsplit(casterUrl)
         self.ntripMountPoint = ntripMountPoint
         timestamp = strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
@@ -85,16 +85,15 @@ class NtripStream:
                                    f'Date: {timestamp}\r\n'
                                    'Connection: close\r\n'
                                    '\r\n').encode('ISO-8859-1')
-        return self.ntripRequestHeader
 
     def setRequestServerHeader(self, casterUrl: str, ntripMountPoint: str,
                                ntripUser: str = None,
                                ntripPassword: str = None,
-                               ntripVersion: int = 2) -> str:
+                               ntripVersion: int = 2):
         self.casterUrl = urlsplit(casterUrl)
         timestamp = strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
 
-        if ntripVersion >= 2.0:
+        if ntripVersion == 2:
             ntripAuth = b64encode((ntripUser + ':' +
                                    ntripPassword).encode('ISO-8859-1')
                                   ).decode()
@@ -109,14 +108,13 @@ class NtripStream:
                                        f'Date: {timestamp}\r\n'
                                        'Connection: close\r\n'
                                        '\r\n').encode('ISO-8859-1')
-        elif ntripVersion == 1.0:
+        elif ntripVersion == 1:
             ntripAuth = b64encode(ntripPassword.encode('ISO-8859-1')).decode()
             self.ntripRequestHeader = (f'SOURCE {ntripAuth} '
                                        f'/{ntripMountPoint} HTTP/1.1\r\n'
                                        'Source-Agent: NTRIP '
                                        f'{self.__CLIENTNAME}\r\n'
                                        '\r\n').encode('ISO-8859-1')
-        return self.ntripRequestHeader
 
     async def getNtripResponceHeader(self):
         self.ntripResponceHeader = []
@@ -138,18 +136,17 @@ class NtripStream:
 
     async def requestSourcetable(self, casterUrl: str):
         await self.openNtripConnection(casterUrl)
-        print(f'{time():.6f}: Connection open. Ready to write.')
-        self.ntripRequestHeader \
-            = self.setRequestSourceTableHeader(self.casterUrl.geturl())
+        logging.info(f'Connection to {casterUrl} open. Ready to write.')
+        self.setRequestSourceTableHeader(self.casterUrl.geturl())
         self.ntripWriter.write(self.ntripRequestHeader)
         await self.ntripWriter.drain()
-        print(f'{time():.6f}: Request sent.')
+        logging.info('Sourcetable request sent.')
         ntripSourcetable = []
         await self.getNtripResponceHeader()
         if self.ntripResponseStatusCode != '200':
-            print(f'Status code error! {self.ntripResponseStatusCode}')
+            logging.error(f'Response error {self.ntripResponseStatusCode}!')
             for line in self.ntripResponceHeader:
-                print(f'Debug: {line}')
+                logging.error(f'TCP response: {line}')
             self.ntripWriter.close()
         while True:
             line = await self.ntripReader.readline()
@@ -159,7 +156,7 @@ class NtripStream:
             if line == 'ENDSOURCETABLE':
                 ntripSourcetable.append(line)
                 self.ntripWriter.close()
-                print(f'{time():.6f}: Sourcetabel received.')
+                logging.info('Sourcetabel received.')
                 break
             else:
                 ntripSourcetable.append(line)
@@ -169,23 +166,24 @@ class NtripStream:
                                  user: str = None, passwd: str = None):
         await self.openNtripConnection(casterUrl)
         self.ntripMountPoint = mountPoint
-        print(f'{time():.6f}: Connection open. Ready to write.')
+        logging.info(f'Connection to {casterUrl} open. Ready to write.')
         self.setRequestStreamHeader(self.casterUrl.geturl(),
                                     self.ntripMountPoint, user, passwd)
         self.ntripWriter.write(self.ntripRequestHeader)
         await self.ntripWriter.drain()
-        print(f'{time():.6f}: Header sent.')
+        logging.info('Request stream header sent.')
         await self.getNtripResponceHeader()
         if self.ntripResponseStatusCode == '200':
             if 'Transfer-Encoding: chunked' in self.ntripResponceHeader:
-                print('Stream is chunked')
+                logging.info('Stream is chunked')
                 self.ntripStreamChunked = True
             self.rtcmFramePreample = False
             self.rtcmFrameAligned = False
         else:
-            print(f'Error! {self.ntripResponseStatusCode}')
+            logging.error(f'Response error {self.ntripResponseStatusCode}!')
             for line in self.ntripResponceHeader:
-                print(line)
+                logging.error(f'TCP response: {line}')
+            raise ConnectionRefusedError(f'{self.ntripResponceHeader[0]}')
             self.ntripWriter.close()
 
     async def getRtcmFrame(self):
@@ -197,14 +195,14 @@ class NtripStream:
                 rawLine = await self.ntripReader.readuntil(b'\r\n')
                 length = int(rawLine[:-2].decode('ISO-8859-1'), 16)
             rawLine = await self.ntripReader.readuntil(b'\r\n')
+            timeStamp = time()
             receivedBytes = BitStream(rawLine[:-2])
             if self.ntripStreamChunked \
                     and receivedBytes.length != length * 8:
-                print('Chunk incomplete.\n Closing connection!')
-                print(f'{time():.6f}: '
-                      f'Chunk {receivedBytes.length}:{length * 8}')
-                break
-
+                logging.error('Chunk incomplete '
+                              f'{receivedBytes.length}:{length * 8}. '
+                              'Closing connection! ')
+                raise IOError('Chunk incomplete ')
             self.rtcmFrameBuffer += receivedBytes
             if not self.rtcmFrameAligned:
                 rtcmFramePos = self.rtcmFrameBuffer.find(
@@ -231,7 +229,6 @@ class NtripStream:
                     else:
                         self.rtcmFrameAligned = False
                         self.rtcmFrameBuffer = self.rtcmFrameBuffer[8:]
-                        print('!!! Warning CRC mismatch realigning!!!')
-                        print(f'{time():.6f}: ' +
-                              f'CRC: {hex(calcCrc)} {rtcmFrame[-24:]}')
-        return rtcmFrame, time()
+                        logging.warning(f'CRC mismatch {hex(calcCrc)} != '
+                                        f'{rtcmFrame[-24:]}. Realigning!')
+        return rtcmFrame, timeStamp

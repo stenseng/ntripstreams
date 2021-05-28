@@ -6,40 +6,55 @@
 """
 
 from asyncio import run
-from time import time
 from ntripstreams import NtripStream
 from rtcm3 import rtcm3
+import logging
 
 
-async def procRtcmStream(url, stn, user, passwd):
+async def procRtcmStream(url, stn, user=None, passwd=None, fail=0):
     ntripstream = NtripStream()
     rtcmMessage = rtcm3()
-    await ntripstream.requestNtripStream(url, stn, user, passwd)
+    try:
+        await ntripstream.requestNtripStream(url, stn, user, passwd)
+    except ConnectionRefusedError:
+        exit(1)
+    except KeyboardInterrupt:
+        print('Adjø!')
+        exit(3)
     while True:
-        rtcmFrame, timeStamp = await ntripstream.getRtcmFrame()
-        rtcmMessesageNo = rtcmFrame.peeklist('pad:24, uint:12')
-        description = rtcmMessage.messageDescription[rtcmMessesageNo[0]]
-        print(f'{time():.6f}: RTCM message #: {rtcmMessesageNo[0]} ' +
-              f'\"{description}\".')
-        # Payloadlength: {rtcmPayloadLength}')
-    return
+        try:
+            rtcmFrame, timeStamp = await ntripstream.getRtcmFrame()
+            rtcmMessesageNo = rtcmFrame.peeklist('pad:24, uint:12')
+            description = rtcmMessage.messageDescription[rtcmMessesageNo[0]]
+            logging.debug(f'RTCM message #:{rtcmMessesageNo[0]} '
+                          f'\"{description}\".')
+        except IOError:
+            if fail >= 5:
+                exit(2)
+                logging.error('Failed to reconnect!')
+            else:
+                logging.warning('Reconnecting!')
+                await procRtcmStream(url, stn, user, passwd, fail=fail + 1)
+        except KeyboardInterrupt:
+            print('Adjø!')
+            exit(3)
 
 
 def main():
     import sys
 
+    logging.basicConfig(format='%(asctime)s;%(levelname)s;%(message)s',
+                        level=logging.DEBUG)
     argc = len(sys.argv)
     ntripstream = NtripStream()
 
     if argc == 1:
-        header = ntripstream.setRequestServerHeader('http://gnsscaster.dk',
-                                                    'PIP', 'otto', 'tystys', 2)
-        for line in header.decode().split('\r\n'):
-            print(f'Server header > {line}')
-        header = ntripstream.setRequestServerHeader('http://gnsscaster.dk',
-                                                    'PIP', 'otto', 'tystys', 1)
-        for line in header.decode().split('\r\n'):
-            print(f'Server header > {line}')
+        ntripstream.setRequestServerHeader('http://gnsscaster.dk',
+                                           'PIP', 'otto', 'tystys', 2)
+        print(ntripstream.ntripRequestHeader.decode())
+        ntripstream.setRequestServerHeader('http://gnsscaster.dk',
+                                           'PIP', 'otto', 'tystys', 1)
+        print(ntripstream.ntripRequestHeader.decode())
     elif argc == 2:
         url = sys.argv[1]
         sourceTable = run(ntripstream.requestSourcetable(url))
@@ -48,16 +63,14 @@ def main():
     elif argc == 3:
         url = sys.argv[1]
         stn = sys.argv[2]
-        run(ntripstream.requestNtripStream(url, stn))
+        # run(ntripstream.requestNtripStream(url, stn))
+        run(procRtcmStream(url, stn))
     elif argc == 5:
         url = sys.argv[1]
         stn = sys.argv[2]
         user = sys.argv[3]
         passwd = sys.argv[4]
         run(procRtcmStream(url, stn, user, passwd))
-        # run(ntripstream.requestNtripStream(url, stn, user, passwd))
-        # while True:
-        #     await ntripstream.getRtcmFrame()
 
 
 if __name__ == '__main__':

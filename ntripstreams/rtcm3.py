@@ -134,7 +134,7 @@ class rtcm3():
         1230: "GLONASS L1 and L2 Code-Phase Biases",
         4001: "4095 Proprietary Messages"}
     __framePreample = Bits(bin='0b11010011')
-    __frameHeaderFormat = 'bin:8, pad:6, uint:10'
+    __frameHeaderFormat = 'bin:8, pad:6, uint:10, uint:12'
 
     def __init__(self, rtcmFrame=None):
         self.rtcmFrame = BitStream(rtcmFrame)
