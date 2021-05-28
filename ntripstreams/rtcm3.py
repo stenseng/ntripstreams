@@ -17,7 +17,7 @@ class rtcm3():
             1003: "L1&L2 GPS RTK Observables",
             1004: "Extended L1&L2 GPS RTK Observables",
             1005: "Stationary RTK Reference Station ARP",
-            1006: "Stationary RTK Reference Station ARP wth Antenna Height",
+            1006: "Stationary RTK Reference Station ARP with Antenna Height",
             1007: "Antenna Descriptor",
             1008: "Antenna Descriptor & Serial Number",
             1009: "L1-Only GLONASS RTK Observables",
@@ -29,9 +29,9 @@ class rtcm3():
             1015: "GPS Ionospheric Correction Differences",
             1016: "GPS Geometric Correction Differences",
             1017: "GPS Combined Geometric and Ionospheric Correction "
-                + "Differences",
+                  + "Differences",
             1018: "RESERVED for Alternative Ionospheric Correction "
-                + "Difference Message",
+                  + "Difference Message",
             1019: "GPS Ephemerides",
             1020: "GLONASS Ephemerides",
             1021: "Helmert / Abridged Molodenski Transformation Parameters",
@@ -39,11 +39,11 @@ class rtcm3():
             1023: "Residuals, Ellipsoidal Grid Representation",
             1024: "Residuals, Plane Grid Representation",
             1025: "Projection Parameters, Projection Types other than "
-                + "Lambert Conic Conformal (2 SP) and Oblique Mercator",
+                  + "Lambert Conic Conformal (2 SP) and Oblique Mercator",
             1026: "Projection Parameters, Projection Type LCC2SP "
-                + "(Lambert Conic Conformal (2 SP))",
+                  + "(Lambert Conic Conformal (2 SP))",
             1027: "Projection Parameters, Projection Type OM "
-                + "(Oblique Mercator)",
+                  + "(Oblique Mercator)",
             1028: "(Reserved for Global to Plate-Fixed Transformation)",
             1029: "Unicode Text String",
             1030: "GPS Network RTK Residual Message",
@@ -55,7 +55,7 @@ class rtcm3():
             1037: "GLONASS Ionospheric Correction Differences",
             1038: "GLONASS Geometric Correction Differences",
             1039: "GLONASS Combined Geometric and Ionospheric Correction "
-                + "Differences",
+                  + "Differences",
             1042: "BDS Satellite Ephemeris Data",
             1044: "QZSS Ephemerides",
             1045: "Galileo F/NAV Satellite Ephemeris Data",
