@@ -166,24 +166,27 @@ class NtripStream:
                                  user: str = None, passwd: str = None):
         await self.openNtripConnection(casterUrl)
         self.ntripMountPoint = mountPoint
-        logging.info(f'Connection to {casterUrl} open. Ready to write.')
+        logging.info(f'{self.ntripMountPoint}:Connection to {casterUrl} open. '
+                     'Ready to write.')
         self.setRequestStreamHeader(self.casterUrl.geturl(),
                                     self.ntripMountPoint, user, passwd)
         self.ntripWriter.write(self.ntripRequestHeader)
         await self.ntripWriter.drain()
-        logging.info('Request stream header sent.')
+        logging.info(f'{self.ntripMountPoint}:Request stream header sent.')
         await self.getNtripResponceHeader()
         if self.ntripResponseStatusCode == '200':
             if 'Transfer-Encoding: chunked' in self.ntripResponceHeader:
-                logging.info('Stream is chunked')
+                logging.info(f'{self.ntripMountPoint}:Stream is chunked')
                 self.ntripStreamChunked = True
             self.rtcmFramePreample = False
             self.rtcmFrameAligned = False
         else:
-            logging.error(f'Response error {self.ntripResponseStatusCode}!')
+            logging.error(f'{self.ntripMountPoint}:Response error '
+                          f'{self.ntripResponseStatusCode}!')
             for line in self.ntripResponceHeader:
-                logging.error(f'TCP response: {line}')
-            raise ConnectionRefusedError(f'{self.ntripResponceHeader[0]}')
+                logging.error(f'{self.ntripMountPoint}:TCP response: {line}')
+            raise ConnectionRefusedError(f'{self.ntripMountPoint}:'
+                                         f'{self.ntripResponceHeader[0]}')
             self.ntripWriter.close()
 
     async def getRtcmFrame(self):
@@ -199,7 +202,7 @@ class NtripStream:
             receivedBytes = BitStream(rawLine[:-2])
             if self.ntripStreamChunked \
                     and receivedBytes.length != length * 8:
-                logging.error('Chunk incomplete '
+                logging.error(f'{self.ntripMountPoint}:Chunk incomplete '
                               f'{receivedBytes.length}:{length * 8}. '
                               'Closing connection! ')
                 raise IOError('Chunk incomplete ')
@@ -229,6 +232,7 @@ class NtripStream:
                     else:
                         self.rtcmFrameAligned = False
                         self.rtcmFrameBuffer = self.rtcmFrameBuffer[8:]
-                        logging.warning(f'CRC mismatch {hex(calcCrc)} != '
-                                        f'{rtcmFrame[-24:]}. Realigning!')
+                        logging.warning(f'{self.ntripMountPoint}:CRC mismatch '
+                                        f'{hex(calcCrc)} != {rtcmFrame[-24:]}.'
+                                        f' Realigning!')
         return rtcmFrame, timeStamp
