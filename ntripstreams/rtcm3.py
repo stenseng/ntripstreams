@@ -3,14 +3,60 @@
 """
 Created on Fri May  7 11:15:55 2021
 
-@author: Lars Stenseng
+i@author: Lars Stenseng
 @mail: lars@stenseng.net
 """
 
-from bitstring import Bits, BitStream
+from bitstring import Bits, pack
+from time import time
 
 
-class rtcm3():
+class Rtcm3:
+    __framePreample = Bits(bin='0b11010011')
+    __frameHeaderFormat = 'bin:8, pad:6, uint:10, uint:12'
+    __msg1029 = ('uint:12=1029, uint:12=refStationId, uint:16=mjd, '
+                 'uint:17=utc, uint:7=utfChars, uint:8=charBytes, '
+                 'bytes=string')
+
+    def __init__(self):
+        pass
+
+    def mjd(self, unixTimestamp):
+        mjd = int(unixTimestamp / 86400.0 + 40587.0)
+        return mjd
+
+    def encodeRtcmFrame(self, messageType: int, dataDict):
+        message = self.encodeRtcmMessage(messageType, dataDict)
+        rtcmFrame = message
+        return rtcmFrame
+
+    def decodeRtcmFrame(self, rtcmFrame):
+        pass
+
+    def encodeRtcmMessage(self, messageType: int, dataDict):
+        if messageType == 1029:
+            utfStr = 'Default string'
+            default = {'refStationId': 0,
+                       'mjd': self.mjd(time()),
+                       'utc': int(time() % 86400),
+                       'utfChars': 0,
+                       'charBytes': 0,
+                       'string': utfStr}
+            data = {key: dataDict.get(key, default[key]) for key in default}
+            data['utfChars'] = len(data['string'])
+            data['string'] = data['string'].encode()
+            data['charBytes'] = len(data['string'])
+            message = pack(self.__msg1029, **data)
+            return message
+
+    def decodeRtcmMessage(self, message):
+        messageType = message.peek('uint:12')
+        if messageType == 1029:
+            data = []
+            data = message.unpack(self.__msg1029)
+            # dataDict = {}
+            return messageType, data  # Dict
+
     messageDescription = {
         1001: "L1-Only GPS RTK Observables",
         1002: "Extended L1-Only GPS RTK Observables",
@@ -28,7 +74,8 @@ class rtcm3():
         1014: "Network Auxiliary Station Data",
         1015: "GPS Ionospheric Correction Differences",
         1016: "GPS Geometric Correction Differences",
-        1017: "GPS Combined Geometric and Ionospheric Correction Differences",
+        1017: "GPS Combined Geometric and Ionospheric Correction "
+              + "Differences",
         1018: "RESERVED for Alternative Ionospheric Correction Difference "
               + "Message",
         1019: "GPS Ephemerides",
@@ -41,7 +88,8 @@ class rtcm3():
               + "Lambert Conic Conformal (2 SP) and Oblique Mercator",
         1026: "Projection Parameters, Projection Type LCC2SP "
               + "(Lambert Conic Conformal (2 SP))",
-        1027: "Projection Parameters, Projection Type OM (Oblique Mercator)",
+        1027: "Projection Parameters, Projection Type OM "
+              + "(Oblique Mercator)",
         1028: "(Reserved for Global to Plate-Fixed Transformation)",
         1029: "Unicode Text String",
         1030: "GPS Network RTK Residual Message",
@@ -133,13 +181,3 @@ class rtcm3():
         1130: "Reserved MSM",
         1230: "GLONASS L1 and L2 Code-Phase Biases",
         4001: "4095 Proprietary Messages"}
-    __framePreample = Bits(bin='0b11010011')
-    __frameHeaderFormat = 'bin:8, pad:6, uint:10, uint:12'
-
-    def __init__(self, rtcmFrame=None):
-        self.rtcmFrame = BitStream(rtcmFrame)
-        if self.rtcmFrame:
-            self.decodeHeader()
-
-    def decodeHeader(self):
-        return

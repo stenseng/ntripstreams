@@ -6,7 +6,7 @@
 """
 
 from ntripstreams import NtripStream
-from rtcm3 import rtcm3
+from rtcm3 import Rtcm3
 from signal import signal, SIGINT, SIGTERM
 import logging
 import asyncio
@@ -29,7 +29,7 @@ signal(SIGTERM, procSigterm)
 async def procRtcmStream(url, mountPoint, user=None, passwd=None,
                          fail=0, retry=5):
     ntripstream = NtripStream()
-    rtcmMessage = rtcm3()
+    rtcmMessage = Rtcm3()
     try:
         await ntripstream.requestNtripStream(url, mountPoint, user, passwd)
     except ConnectionRefusedError:
@@ -37,10 +37,10 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None,
     while True:
         try:
             rtcmFrame, timeStamp = await ntripstream.getRtcmFrame()
-            rtcmMessesageNo = rtcmFrame.peeklist('pad:24, uint:12')
-            description = rtcmMessage.messageDescription[rtcmMessesageNo[0]]
-            logging.debug(f'{mountPoint}:RTCM message #:{rtcmMessesageNo[0]} '
-                          f'\"{description}\".')
+            rtcmMessesageType = rtcmFrame.peeklist('pad:24, uint:12')
+            description = rtcmMessage.messageDescription[rtcmMessesageType[0]]
+            logging.debug(f'{mountPoint}:RTCM message #:{rtcmMessesageType[0]}'
+                          f' \"{description}\".')
             fail = 0
         except IOError:
             if fail >= retry:
