@@ -179,5 +179,6 @@ class Rtcm3:
         1128: "Reserved MSM",
         1129: "Reserved MSM",
         1130: "Reserved MSM",
-        1230: "GLONASS L1 and L2 Code-Phase Biases",
-        4001: "4095 Proprietary Messages"}
+        1230: "GLONASS L1 and L2 Code-Phase Biases"
+        # 4001-4095: "Proprietary Messages"
+        }
