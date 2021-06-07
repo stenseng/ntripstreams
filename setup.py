@@ -18,7 +18,7 @@ URL = 'https://github.com/stenseng/ntripstreams'
 EMAIL = 'lars@stenseng.net'
 AUTHOR = 'Lars Stenseng'
 REQUIRES_PYTHON = '>=3.7.0'
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 
 # What packages are required for this module to be executed?
 REQUIRED = [

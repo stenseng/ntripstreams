@@ -1,2 +1,2 @@
-from ntripstreams import NtripStream
-# from .ntripstreams import *
+__all__ = ['NtripStream']
+# from ntripstreams.ntripstreams import NtripStream

@@ -11,9 +11,10 @@ from urllib.parse import urlsplit
 from base64 import b64encode
 from time import time, strftime, gmtime
 from bitstring import Bits, BitStream
-from crc import crc24q
 
-from __version__ import __version__
+from .crc import crc24q
+
+from .__version__ import __version__
 
 
 class NtripStream:
