@@ -1,1 +1,1 @@
-__all__ = ['ntripstreams', 'rtcm3', 'crc']
+__all__ = ["ntripstreams", "rtcm3", "crc"]

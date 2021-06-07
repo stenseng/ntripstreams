@@ -7,16 +7,19 @@ i@author: Lars Stenseng
 @mail: lars@stenseng.net
 """
 
-from bitstring import Bits, pack
 from time import time
+
+from bitstring import Bits, pack
 
 
 class Rtcm3:
-    __framePreample = Bits(bin='0b11010011')
-    __frameHeaderFormat = 'bin:8, pad:6, uint:10, uint:12'
-    __msg1029 = ('uint:12=1029, uint:12=refStationId, uint:16=mjd, '
-                 'uint:17=utc, uint:7=utfChars, uint:8=charBytes, '
-                 'bytes=string')
+    __framePreample = Bits(bin="0b11010011")
+    __frameHeaderFormat = "bin:8, pad:6, uint:10, uint:12"
+    __msg1029 = (
+        "uint:12=1029, uint:12=refStationId, uint:16=mjd, "
+        "uint:17=utc, uint:7=utfChars, uint:8=charBytes, "
+        "bytes=string"
+    )
 
     def __init__(self):
         pass
@@ -35,22 +38,24 @@ class Rtcm3:
 
     def encodeRtcmMessage(self, messageType: int, dataDict):
         if messageType == 1029:
-            utfStr = 'Default string'
-            default = {'refStationId': 0,
-                       'mjd': self.mjd(time()),
-                       'utc': int(time() % 86400),
-                       'utfChars': 0,
-                       'charBytes': 0,
-                       'string': utfStr}
+            utfStr = "Default string"
+            default = {
+                "refStationId": 0,
+                "mjd": self.mjd(time()),
+                "utc": int(time() % 86400),
+                "utfChars": 0,
+                "charBytes": 0,
+                "string": utfStr,
+            }
             data = {key: dataDict.get(key, default[key]) for key in default}
-            data['utfChars'] = len(data['string'])
-            data['string'] = data['string'].encode()
-            data['charBytes'] = len(data['string'])
+            data["utfChars"] = len(data["string"])
+            data["string"] = data["string"].encode()
+            data["charBytes"] = len(data["string"])
             message = pack(self.__msg1029, **data)
             return message
 
     def decodeRtcmMessage(self, message):
-        messageType = message.peek('uint:12')
+        messageType = message.peek("uint:12")
         if messageType == 1029:
             data = []
             data = message.unpack(self.__msg1029)
@@ -74,10 +79,8 @@ class Rtcm3:
         1014: "Network Auxiliary Station Data",
         1015: "GPS Ionospheric Correction Differences",
         1016: "GPS Geometric Correction Differences",
-        1017: "GPS Combined Geometric and Ionospheric Correction "
-              + "Differences",
-        1018: "RESERVED for Alternative Ionospheric Correction Difference "
-              + "Message",
+        1017: "GPS Combined Geometric and Ionospheric Correction " + "Differences",
+        1018: "RESERVED for Alternative Ionospheric Correction Difference " + "Message",
         1019: "GPS Ephemerides",
         1020: "GLONASS Ephemerides",
         1021: "Helmert / Abridged Molodenski Transformation Parameters",
@@ -85,11 +88,10 @@ class Rtcm3:
         1023: "Residuals, Ellipsoidal Grid Representation",
         1024: "Residuals, Plane Grid Representation",
         1025: "Projection Parameters, Projection Types other than "
-              + "Lambert Conic Conformal (2 SP) and Oblique Mercator",
+        + "Lambert Conic Conformal (2 SP) and Oblique Mercator",
         1026: "Projection Parameters, Projection Type LCC2SP "
-              + "(Lambert Conic Conformal (2 SP))",
-        1027: "Projection Parameters, Projection Type OM "
-              + "(Oblique Mercator)",
+        + "(Lambert Conic Conformal (2 SP))",
+        1027: "Projection Parameters, Projection Type OM " + "(Oblique Mercator)",
         1028: "(Reserved for Global to Plate-Fixed Transformation)",
         1029: "Unicode Text String",
         1030: "GPS Network RTK Residual Message",
@@ -100,8 +102,7 @@ class Rtcm3:
         1035: "GLONASS Network FKP Gradient",
         1037: "GLONASS Ionospheric Correction Differences",
         1038: "GLONASS Geometric Correction Differences",
-        1039: "GLONASS Combined Geometric and Ionospheric Correction "
-              + "Differences",
+        1039: "GLONASS Combined Geometric and Ionospheric Correction " + "Differences",
         1042: "BDS Satellite Ephemeris Data",
         1044: "QZSS Ephemerides",
         1045: "Galileo F/NAV Satellite Ephemeris Data",
@@ -181,4 +182,4 @@ class Rtcm3:
         1130: "Reserved MSM",
         1230: "GLONASS L1 and L2 Code-Phase Biases"
         # 4001-4095: "Proprietary Messages"
-        }
+    }
