@@ -5,13 +5,13 @@
 @mail: lars@stenseng.net
 """
 
-from signal import signal, SIGINT, SIGTERM
-import logging
-import asyncio
 import argparse
+import asyncio
+import logging
+from signal import signal, SIGINT, SIGTERM
 
-from ntripstreams.ntripstreams import NtripStream
-from ntripstreams.rtcm3 import Rtcm3
+from .ntripstreams import NtripStream
+from .rtcm3 import Rtcm3
 
 
 def procSigint(signum, frame):
@@ -42,7 +42,7 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None,
             rtcmMessesageType = rtcmFrame.peeklist('pad:24, uint:12')
             description = rtcmMessage.messageDescription[rtcmMessesageType[0]]
             logging.debug(f'{mountPoint}:RTCM message #:{rtcmMessesageType[0]}'
-                          f' \"{description}\".')
+                          f' "{description}".')
             fail = 0
         except IOError:
             if fail >= retry:
@@ -69,18 +69,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument('url', help='Ntripcaster url and port. '
                     '(e.g. http[s]://caster.hostename.net:2101)')
 parser.add_argument('-m', '--mountpoint', action='append',
-                    help='Name of mountpoint without'
-                    ' leading / (e.g. PNT1).')
+                    help='Name of mountpoint without leading / (e.g. PNT1).')
 parser.add_argument('-u', '--user', help='Username to access Ntrip '
                     'caster.')
-parser.add_argument('-p', '--passwd', help='Password  to access Ntrip '
-                    'caster.')
+parser.add_argument('-p', '--passwd', help='Password  to access Ntrip caster.')
 parser.add_argument('-s', '--server', action='store_true',
                     help='Send data to Ntrip caster as a server.')
 parser.add_argument('-1', '--ntrip1', action='store_true',
                     help='Use Ntrip 1 protocol.')
-parser.add_argument('-l', '--logfile', help='Log to file. Default output '
-                    'is terminal.')
+parser.add_argument('-l', '--logfile', help='Log to file. Default output is '
+                    'terminal.')
 parser.add_argument('-v', '--verbosity', action='count', default=0,
                     help='Increase verbosity level.')
 args = parser.parse_args()

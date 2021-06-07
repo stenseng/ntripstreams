@@ -7,14 +7,14 @@
 
 import asyncio
 import logging
-from urllib.parse import urlsplit
 from base64 import b64encode
 from time import time, strftime, gmtime
+from urllib.parse import urlsplit
+
 from bitstring import Bits, BitStream
 
-from .crc import crc24q
-
 from .__version__ import __version__
+from .crc import crc24q
 
 
 class NtripStream:
@@ -97,9 +97,10 @@ class NtripStream:
         timestamp = strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
 
         if self.ntripVersion == 2:
-            ntripAuth = b64encode((ntripUser + ':' +
-                                   ntripPassword).encode('ISO-8859-1')
-                                  ).decode()
+            if ntripUser and ntripPassword:
+                ntripAuth = b64encode((ntripUser + ':' +
+                                       ntripPassword).encode('ISO-8859-1')
+                                      ).decode()
             self.ntripAuthString = f'Authorization: Basic {ntripAuth}\r\n'
             self.ntripRequestHeader = (f'POST /{ntripMountPoint} HTTP/1.1\r\n'
                                        f'Host: {self.casterUrl.geturl()}\r\n'
@@ -112,7 +113,9 @@ class NtripStream:
                                        'Connection: close\r\n'
                                        '\r\n').encode('ISO-8859-1')
         elif self.ntripVersion == 1:
-            ntripAuth = b64encode(ntripPassword.encode('ISO-8859-1')).decode()
+            if ntripPassword:
+                ntripAuth = b64encode(ntripPassword.encode('ISO-8859-1')
+                                      ).decode()
             self.ntripRequestHeader = (f'SOURCE {ntripAuth} '
                                        f'/{ntripMountPoint} HTTP/1.1\r\n'
                                        'Source-Agent: NTRIP '

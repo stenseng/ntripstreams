@@ -9,7 +9,7 @@ import os
 import sys
 from shutil import rmtree
 
-from setuptools import find_packages, setup, Command
+from setuptools import Command, find_packages, setup
 
 # Package meta-data.
 NAME = 'ntripstreams'
@@ -18,16 +18,16 @@ URL = 'https://github.com/stenseng/ntripstreams'
 EMAIL = 'lars@stenseng.net'
 AUTHOR = 'Lars Stenseng'
 REQUIRES_PYTHON = '>=3.7.0'
-VERSION = '0.1.3'
+VERSION = ''
 
 # What packages are required for this module to be executed?
-REQUIRED = [
+REQUIRED: list = [
     'bitstring'
     # 'requests', 'maya', 'records',
 ]
 
 # What packages are optional?
-EXTRAS = {
+EXTRAS: dict = {
     # 'fancy feature': ['django'],
 }
 
@@ -48,7 +48,7 @@ except FileNotFoundError:
     long_description = DESCRIPTION
 
 # Load the package's __version__.py module as a dictionary.
-about = {}
+about: dict = {}
 if not VERSION:
     project_slug = NAME.lower().replace("-", "_").replace(" ", "_")
     with open(os.path.join(here, project_slug, '__version__.py')) as f:
@@ -61,7 +61,7 @@ class UploadCommand(Command):
     """Support setup.py upload."""
 
     description = 'Build and publish the package.'
-    user_options = []
+    user_options: list = []
 
     @staticmethod
     def status(s):
