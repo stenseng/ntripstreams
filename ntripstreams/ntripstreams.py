@@ -8,7 +8,7 @@
 import asyncio
 import logging
 from base64 import b64encode
-from time import time, strftime, gmtime
+from time import gmtime, strftime, time
 from urllib.parse import urlsplit
 
 from bitstring import Bits, BitStream

@@ -8,7 +8,7 @@
 import argparse
 import asyncio
 import logging
-from signal import signal, SIGINT, SIGTERM
+from signal import SIGINT, SIGTERM, signal
 
 from .ntripstreams import NtripStream
 from .rtcm3 import Rtcm3
