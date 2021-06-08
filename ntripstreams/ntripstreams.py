@@ -230,23 +230,6 @@ class NtripStream:
         await self.getNtripResponseHeader()
         logging.debug(self.ntripResponseHeader)
         self.ntripResponseStatusOk()
-        # if self.ntripResponseStatusCode == "200":
-        #     if "Transfer-Encoding: chunked" in self.ntripResponseHeader:
-        #         logging.info(f"{self.ntripMountPoint}:Stream is chunked")
-        #         self.ntripStreamChunked = True
-        #     self.rtcmFramePreample = False
-        #     self.rtcmFrameAligned = False
-        # else:
-        #     logging.error(
-        #         f"{self.ntripMountPoint}:Response error "
-        #         f"{self.ntripResponseStatusCode}!"
-        #     )
-        #     for line in self.ntripResponseHeader:
-        #         logging.error(f"{self.ntripMountPoint}:TCP response: {line}")
-        #     raise ConnectionRefusedError(
-        #         f"{self.ntripMountPoint}:" f"{self.ntripResponseHeader[0]}"
-        #     )
-        #     self.ntripWriter.close()
 
     async def sendRtcmFrame(self, rtcmFrame):
         self.ntripWriter.write(rtcmFrame)
@@ -268,23 +251,6 @@ class NtripStream:
         logging.info(f"{self.ntripMountPoint}:Request stream header sent.")
         await self.getNtripResponseHeader()
         self.ntripResponseStatusOk()
-        # if self.ntripResponseStatusCode == "200":
-        #     if "Transfer-Encoding: chunked" in self.ntripResponseHeader:
-        #         logging.info(f"{self.ntripMountPoint}:Stream is chunked")
-        #         self.ntripStreamChunked = True
-        #     self.rtcmFramePreample = False
-        #     self.rtcmFrameAligned = False
-        # else:
-        #     logging.error(
-        #         f"{self.ntripMountPoint}:Response error "
-        #         f"{self.ntripResponseStatusCode}!"
-        #     )
-        #     for line in self.ntripResponseHeader:
-        #         logging.error(f"{self.ntripMountPoint}:TCP response: {line}")
-        #     raise ConnectionRefusedError(
-        #         f"{self.ntripMountPoint}:" f"{self.ntripResponseHeader[0]}"
-        #     )
-        #     self.ntripWriter.close()
 
     async def getRtcmFrame(self):
         rtcm3FramePreample = Bits(bin="0b11010011")
@@ -310,7 +276,7 @@ class NtripStream:
                     rtcm3FramePreample, bytealigned=True
                 )
                 if rtcmFramePos:
-                    self.rtcmFrameBuffer = self.rtcmFrameBuffer[rtcmFramePos[0]:]
+                    self.rtcmFrameBuffer = self.rtcmFrameBuffer[rtcmFramePos[0] :]
                     self.rtcmFramePreample = True
                 else:
                     self.rtcmFrameBuffer = BitStream()
