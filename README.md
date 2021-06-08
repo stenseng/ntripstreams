@@ -1,7 +1,7 @@
 # NtripStreams
 =======================
 
-[![GitHub Super-Linter](https://github.com/stenseng/ntripstreams/workflows/SuperLinter/badge.svg)](https://github.com/marketplace/actions/super-linter)
+[![Linting Code Base](https://github.com/stenseng/ntripstreams/actions/workflows/linter.yml/badge.svg)](https://github.com/stenseng/ntripstreams/actions/workflows/linter.yml)
 
 NtripStreams provide methods for communicating using the Ntrip protocol.
 
