@@ -34,7 +34,7 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None, fail=0, retry=
     try:
         await ntripstream.requestNtripStream(url, mountPoint, user, passwd)
     except ConnectionRefusedError:
-        exit(1)
+        return
     while True:
         try:
             rtcmFrame, timeStamp = await ntripstream.getRtcmFrame()
@@ -50,7 +50,7 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None, fail=0, retry=
                 logging.error(
                     f"{mountPoint}:{fail} failed attempt to " "reconnect. Bailing out!"
                 )
-                exit(2)
+                return
             else:
                 fail += 1
                 logging.warning(f"{mountPoint}:Reconnecting. " f"Attempt no. {fail}.")
