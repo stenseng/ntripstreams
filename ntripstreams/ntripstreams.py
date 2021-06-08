@@ -276,7 +276,7 @@ class NtripStream:
                     rtcm3FramePreample, bytealigned=True
                 )
                 if rtcmFramePos:
-                    self.rtcmFrameBuffer = self.rtcmFrameBuffer[rtcmFramePos[0] :]
+                    self.rtcmFrameBuffer = self.rtcmFrameBuffer[(rtcmFramePos[0]):]
                     self.rtcmFramePreample = True
                 else:
                     self.rtcmFrameBuffer = BitStream()
