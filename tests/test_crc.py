@@ -14,7 +14,6 @@ from ntripstreams.crc import crc24q, crcNmea, genLookup
 
 
 class TestCrcFunctions(unittest.TestCase):
-
     def test_crcNmea(self):
         nmeaStr = (
             "$GPGGA,092751.000,5321.6802,N,00630.3371,W,1,8,1.03,61.7,M,55.3,M,,*75"
