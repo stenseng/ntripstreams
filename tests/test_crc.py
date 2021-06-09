@@ -17,7 +17,8 @@ class TestCrcFunctions(unittest.TestCase):
 
     def test_crcNmea(self):
         nmeaStr = (
-            "$GPGGA,092751.000,5321.6802,N,00630.3371,W,1,8,1.03,61.7,M,55.3,M,,*75")
+            "$GPGGA,092751.000,5321.6802,N,00630.3371,W,1,8,1.03,61.7,M,55.3,M,,*75"
+        )
         nmeaBits = BitStream(nmeaStr[1:-3].encode())
         nmeaCrcBits = BitStream("0x" + nmeaStr[-2:])
         self.assertEqual(crcNmea(nmeaBits), BitStream(nmeaCrcBits))
