@@ -2,6 +2,7 @@
 =======================
 
 [![Linting Code Base](https://github.com/stenseng/ntripstreams/actions/workflows/linter.yml/badge.svg)](https://github.com/stenseng/ntripstreams/actions/workflows/linter.yml)
+[![Python unittest](https://github.com/stenseng/ntripstreams/actions/workflows/unittest.yml/badge.svg)](https://github.com/stenseng/ntripstreams/actions/workflows/unittest.yml)
 
 NtripStreams provide methods for communicating using the Ntrip protocol.
 
