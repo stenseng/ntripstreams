@@ -12,7 +12,6 @@ from time import gmtime, strftime, time
 from urllib.parse import urlsplit
 
 from bitstring import Bits, BitStream
-
 from ntripstreams.__version__ import __version__
 from ntripstreams.crc import crc24q
 
