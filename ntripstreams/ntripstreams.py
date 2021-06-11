@@ -13,8 +13,8 @@ from urllib.parse import urlsplit
 
 from bitstring import Bits, BitStream
 
-from .__version__ import __version__
-from .crc import crc24q
+from ntripstreams.__version__ import __version__
+from ntripstreams.crc import crc24q
 
 
 class NtripStream:

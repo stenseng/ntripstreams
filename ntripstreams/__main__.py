@@ -10,8 +10,8 @@ import asyncio
 import logging
 from signal import SIGINT, SIGTERM, signal
 
-from .ntripstreams import NtripStream
-from .rtcm3 import Rtcm3
+from ntripstreams.ntripstreams import NtripStream
+from ntripstreams.rtcm3 import Rtcm3
 
 
 def procSigint(signum, frame):

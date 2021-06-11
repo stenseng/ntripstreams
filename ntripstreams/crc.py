@@ -14,7 +14,7 @@ from bitstring import BitStream
 def crcNmea(data):
     crc = BitStream("0x00")
     length = int(data.length / 8)
-    for i in range(length):
+    for _ in range(length):
         crc = crc ^ data.read("bytes:1")
     return crc
 
@@ -290,7 +290,7 @@ def crc24q(data):
 
     crc = 0
     length = int(data.length / 8)
-    for i in range(length):
+    for _ in range(length):
         crc = (crc << 8) ^ crclut[data.read("bytes:1")[0] ^ (crc >> 16)]
         crc = crc & 0xFFFFFF
     return crc
@@ -318,7 +318,7 @@ def genLookup():
 
     for index in range(256):
         r = index << (crcWidth - 8)
-        for i in range(8):
+        for _ in range(8):
             if r & topbit:
                 r = (r << 1) ^ crcPoly
             else:
