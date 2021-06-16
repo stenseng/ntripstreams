@@ -185,25 +185,25 @@ class Rtcm3:
                 satData.append(message.readlist(self.__msg1012Obs))
 
         elif (
-            (messageType >= 1071 and messageType <= 1077) or
-            (messageType >= 1081 and messageType <= 1087) or
-            (messageType >= 1091 and messageType <= 1097) or
-            (messageType >= 1101 and messageType <= 1107) or
-            (messageType >= 1111 and messageType <= 1117) or
-            (messageType >= 1121 and messageType <= 1127)
+            (messageType >= 1071 and messageType <= 1077)
+            or (messageType >= 1081 and messageType <= 1087)
+            or (messageType >= 1091 and messageType <= 1097)
+            or (messageType >= 1101 and messageType <= 1107)
+            or (messageType >= 1111 and messageType <= 1117)
+            or (messageType >= 1121 and messageType <= 1127)
         ):
             head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
             if (
-                (messageType % 10 == 1) or
-                (messageType % 10 == 2) or
-                (messageType % 10 == 3)
+                (messageType % 10 == 1)
+                or (messageType % 10 == 2)
+                or (messageType % 10 == 3)
             ):
                 for _ in range(noSats):
                     satData.append(message.readlist(self.__msgMsm123Sat))
-            elif ((messageType % 10 == 4) or (messageType % 10 == 6)):
+            elif (messageType % 10 == 4) or (messageType % 10 == 6):
                 for _ in range(noSats):
                     satData.append(message.readlist(self.__msgMsm46Sat))
-            elif ((messageType % 10 == 5) or (messageType % 10 == 7)):
+            elif (messageType % 10 == 5) or (messageType % 10 == 7):
                 for _ in range(noSats):
                     satData.append(message.readlist(self.__msgMsm57Sat))
 
