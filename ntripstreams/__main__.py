@@ -38,22 +38,36 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None, fail=0, retry=
     while True:
         try:
             rtcmFrame, timeStamp = await ntripstream.getRtcmFrame()
-            rtcmMessesageType = rtcmFrame.peeklist("pad:24, uint:12")
-            description = rtcmMessage.messageDescription[rtcmMessesageType[0]]
+            messageType, data = rtcmMessage.decodeRtcmFrame(rtcmFrame)
+            description = rtcmMessage.messageDescription[messageType]
             logging.debug(
-                f"{mountPoint}:RTCM message #:{rtcmMessesageType[0]}"
-                f' "{description}".'
+                f"{mountPoint}:RTCM message #:{messageType}" f' "{description}".'
             )
+            if (
+                (messageType >= 1001 and messageType <= 1004)
+                or (messageType >= 1009 and messageType <= 1012)
+                or (messageType >= 1071 and messageType <= 1077)
+                or (messageType >= 1081 and messageType <= 1087)
+                or (messageType >= 1091 and messageType <= 1097)
+                or (messageType >= 1101 and messageType <= 1107)
+                or (messageType >= 1111 and messageType <= 1117)
+                or (messageType >= 1121 and messageType <= 1127)
+            ):
+                logging.debug(
+                    f"{mountPoint}:RTCM message #:{messageType} "
+                    f"Sats: {len(data[1])}"
+                    f" Signals: {len(data[2])}"
+                )
             fail = 0
         except IOError:
             if fail >= retry:
                 logging.error(
-                    f"{mountPoint}:{fail} failed attempt to " "reconnect. Bailing out!"
+                    f"{mountPoint}:{fail} failed attempt to reconnect. Bailing out!"
                 )
                 return
             else:
                 fail += 1
-                logging.warning(f"{mountPoint}:Reconnecting. " f"Attempt no. {fail}.")
+                logging.warning(f"{mountPoint}:Reconnecting. Attempt no. {fail}.")
                 await procRtcmStream(url, mountPoint, user, passwd, fail)
 
 

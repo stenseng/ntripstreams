@@ -15,11 +15,90 @@ from bitstring import Bits, pack
 class Rtcm3:
     __framePreample = Bits(bin="0b11010011")
     __frameHeaderFormat = "bin:8, pad:6, uint:10, uint:12"
+    __frameFormat = "bin:8, pad:6, uint:10"
+
+    # GPS messages
+    __msg1001_4Head = (
+        "uint:12=refStationId, uint:30=tow, bool=syncGNSSFlag, "
+        "uint:5=noSignalsObs, bool=divFreeSmootFlag, bin:3=smoothInterval"
+    )
+    __msg1001Head = "uint:12=1001, " + __msg1001_4Head
+    __msg1002Head = "uint:12=1002, " + __msg1001_4Head
+    __msg1003Head = "uint:12=1003, " + __msg1001_4Head
+    __msg1004Head = "uint:12=1004, " + __msg1001_4Head
+    __msg1001Obs = (
+        "uint:6=satId, bool=l1CodeFlag, uint:24=l1PseudoRange, "
+        "int:20=l1PhaserangeL1PseudorangeDiff, uint:7=l1LockTimeIndicator"
+    )
+    __msg1002Obs = __msg1001Obs + "uint:8=l1PseudorangeAmbiguity, uint:8=l1CNR"
+    __msg1003Obs = (
+        __msg1001Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
+        "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator"
+    )
+    __msg1004Obs = (
+        __msg1002Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
+        "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator, "
+        "uint:8=l2CNR"
+    )
+
+    # GLONASS messages
+    __msg1009_12Head = (
+        "uint:12=refStationId, uint:27=epochTime, bool=syncGNSSFlag, "
+        "uint:5=noSignalsObs, bool=divFreeSmootFlag, bin:3=smoothInterval"
+    )
+    __msg1009Head = "uint:12=1001, " + __msg1009_12Head
+    __msg1010Head = "uint:12=1002, " + __msg1009_12Head
+    __msg1011Head = "uint:12=1003, " + __msg1009_12Head
+    __msg1012Head = "uint:12=1004, " + __msg1009_12Head
+    __msg1009Obs = (
+        "uint:6=satId, bool=codeFlag, uint:5=freqChannelNo,  uint:24=l1Pseudorange, "
+        "int:20=l1PhaserangeL1PseudorangeDiff, uint:7=l1LockTimeIndicator"
+    )
+    __msg1010Obs = __msg1009Obs + "uint:8=l1PseudorangeAmbiguity, uint:8=l1CNR"
+    __msg1011Obs = (
+        __msg1009Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
+        "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator"
+    )
+    __msg1012Obs = (
+        __msg1010Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
+        "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator, "
+        "uint:8=l2CNR"
+    )
+
+    # Other messages
     __msg1029 = (
         "uint:12=1029, uint:12=refStationId, uint:16=mjd, "
         "uint:17=utc, uint:7=utfChars, uint:8=charBytes, "
         "bytes=string"
     )
+
+    # MSM messages
+    __msgMsmHead = (
+        "uint:12=refStationId, uint:30=gnssEpochTime, bool=multiMessageFlag, "
+        "uint:3=iods, pad:7, uint:2=clockSteringIndicator, uint:2=extClockIndicator, "
+        "bool=divFreeSmootFlag, bin:3=smoothInterval, bin:64=gnssSatMask, "
+        "bin:32=gnssSignalMask"  # Husk Cell mask bin:Nsats * Nsigs
+    )
+    __msgMsm123Sat = "uint:10=roughRangeMod1ms"
+    __msgMsm46Sat = "uint:8=noIntMsRoughRange, uint:10=roughRangeMod1ms"
+    __msgMsm57Sat = (
+        "uint:8=noIntMsRoughRange, uint:4=extSatInfo, uint:10=roughRangeMod1ms, "
+        "int:14=roughPhaseRangeRate"
+    )
+    __msgMsm1Signal = "int:15=signalFinePseudorange"
+    __msgMsm2Signal = (
+        "int:22=signalFinePhaserange, uint:4=phaserangeLockTimeIndicator, "
+        "bool=halfcycleAmbiguity"
+    )
+    __msgMsm3Signal = __msgMsm1Signal + ", " + __msgMsm2Signal
+    __msgMsm4Signal = __msgMsm3Signal + ", uint:6=signalCNR"
+    __msgMsm5Signal = __msgMsm4Signal + ", int:15=signalFinePhaserangeRate"
+    __msgMsm6Signal = (
+        "int:20=signalFinePseudorangeExtRes, int:24=signalFinePhaserangeExtRes, "
+        "uint:10=phaserangeLockTimeIndicatorExtRes, bool=halfcycleAmbiguity"
+        "uint:10=signalCNRExtRes"
+    )
+    __msgMsm7Signal = __msgMsm6Signal + ", int:15=signalFinePhaserangeRate"
 
     def __init__(self):
         pass
@@ -34,7 +113,9 @@ class Rtcm3:
         return rtcmFrame
 
     def decodeRtcmFrame(self, rtcmFrame):
-        pass
+        rtcmPayload = rtcmFrame[24:-24]
+        messageType, data = self.decodeRtcmMessage(rtcmPayload)
+        return messageType, data
 
     def encodeRtcmMessage(self, messageType: int, dataDict):
         if messageType == 1029:
@@ -54,27 +135,170 @@ class Rtcm3:
             message = pack(self.__msg1029, **data)
             return message
 
+    def __decodeMsmHeader(self, message):
+        head = message.readlist(self.__msgMsmHead)
+        noSats = Bits(bin=head[8]).bin.count("1")
+        noSignals = Bits(bin=head[9]).bin.count("1")
+        cellMask = message.read(f"bin:{noSats * noSignals}")
+        head.append(cellMask)
+        noCells = Bits(bin=head[10]).bin.count("1")
+        return head, noSats, noSignals, noCells
+
     def decodeRtcmMessage(self, message):
         messageType = message.peek("uint:12")
-        if messageType == 1029:
-            data = []
-            data = message.unpack(self.__msg1029)
-            # dataDict = {}
-            return messageType, data  # Dict
+        data = []
+        satData = []
+        signalData = []
+        if messageType == 1001:
+            data = message.readlist(self.__msg1001Head)
+            for _ in range(data[4]):
+                data.append(message.readlist(self.__msg1001Obs))
+        elif messageType == 1002:
+            data = message.readlist(self.__msg1002Head)
+            for _ in range(data[4]):
+                data.append(message.readlist(self.__msg1002Obs))
+        elif messageType == 1003:
+            data = message.readlist(self.__msg1003Head)
+            for _ in range(data[4]):
+                data.append(message.readlist(self.__msg1003Obs))
+        elif messageType == 1004:
+            data = message.readlist(self.__msg1004Head)
+            for _ in range(data[4]):
+                data.append(message.readlist(self.__msg1004Obs))
+
+        elif messageType == 1009:
+            data = message.readlist(self.__msg1009Head)
+            for _ in range(data[4]):
+                data.append(message.readlist(self.__msg1009Obs))
+        elif messageType == 1010:
+            data = message.readlist(self.__msg1010Head)
+            for _ in range(data[4]):
+                data.append(message.readlist(self.__msg1010Obs))
+        elif messageType == 1011:
+            data = message.readlist(self.__msg1011Head)
+            for _ in range(data[4]):
+                data.append(message.readlist(self.__msg1011Obs))
+        elif messageType == 1012:
+            data = message.readlist(self.__msg1012Head)
+            for _ in range(data[4]):
+                data.append(message.readlist(self.__msg1012Obs))
+
+        elif (
+            messageType == 1071
+            or messageType == 1081
+            or messageType == 1091
+            or messageType == 1101
+            or messageType == 1111
+            or messageType == 1121
+        ):
+            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
+            for _ in range(noSats):
+                satData.append(message.readlist(self.__msgMsm123Sat))
+            for _ in range(noCells):
+                signalData.append(message.readlist(self.__msgMsm1Signal))
+            data = [head, satData, signalData]
+        elif (
+            messageType == 1072
+            or messageType == 1082
+            or messageType == 1092
+            or messageType == 1102
+            or messageType == 1112
+            or messageType == 1122
+        ):
+            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
+            for _ in range(noSats):
+                satData.append(message.readlist(self.__msgMsm123Sat))
+            for _ in range(noCells):
+                signalData.append(message.readlist(self.__msgMsm2Signal))
+            data = [head, satData, signalData]
+        elif (
+            messageType == 1073
+            or messageType == 1083
+            or messageType == 1093
+            or messageType == 1103
+            or messageType == 1113
+            or messageType == 1123
+        ):
+            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
+            for _ in range(noSats):
+                satData.append(message.readlist(self.__msgMsm123Sat))
+            for _ in range(noCells):
+                signalData.append(message.readlist(self.__msgMsm3Signal))
+            data = [head, satData, signalData]
+        elif (
+            messageType == 1074
+            or messageType == 1084
+            or messageType == 1094
+            or messageType == 1104
+            or messageType == 1114
+            or messageType == 1124
+        ):
+            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
+            for _ in range(noSats):
+                satData.append(message.readlist(self.__msgMsm46Sat))
+            for _ in range(noCells):
+                signalData.append(message.readlist(self.__msgMsm4Signal))
+            data = [head, satData, signalData]
+        elif (
+            messageType == 1075
+            or messageType == 1085
+            or messageType == 1095
+            or messageType == 1105
+            or messageType == 1115
+            or messageType == 1125
+        ):
+            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
+            for _ in range(noSats):
+                satData.append(message.readlist(self.__msgMsm57Sat))
+            for _ in range(noCells):
+                signalData.append(message.readlist(self.__msgMsm5Signal))
+            data = [head, satData, signalData]
+        elif (
+            messageType == 1076
+            or messageType == 1086
+            or messageType == 1096
+            or messageType == 1106
+            or messageType == 1116
+            or messageType == 1126
+        ):
+            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
+            for _ in range(noSats):
+                satData.append(message.readlist(self.__msgMsm46Sat))
+            for _ in range(noCells):
+                signalData.append(message.readlist(self.__msgMsm6Signal))
+            data = [head, satData, signalData]
+        elif (
+            messageType == 1077
+            or messageType == 1087
+            or messageType == 1097
+            or messageType == 1107
+            or messageType == 1117
+            or messageType == 1127
+        ):
+            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
+            for _ in range(noSats):
+                satData.append(message.readlist(self.__msgMsm57Sat))
+            for _ in range(noCells):
+                signalData.append(message.readlist(self.__msgMsm7Signal))
+            data = [head, satData, signalData]
+
+        elif messageType == 1029:
+            data = message.readlist(self.__msg1029)
+        return messageType, data
 
     messageDescription = {
         1001: "L1-Only GPS RTK Observables",
         1002: "Extended L1-Only GPS RTK Observables",
-        1003: "L1&L2 GPS RTK Observables",
-        1004: "Extended L1&L2 GPS RTK Observables",
+        1003: "L1 & L2 GPS RTK Observables",
+        1004: "Extended L1 & L2 GPS RTK Observables",
         1005: "Stationary RTK Reference Station ARP",
         1006: "Stationary RTK Reference Station ARP with Antenna Height",
         1007: "Antenna Descriptor",
         1008: "Antenna Descriptor & Serial Number",
         1009: "L1-Only GLONASS RTK Observables",
         1010: "Extended L1-Only GLONASS RTK Observables",
-        1011: "L1&L2 GLONASS RTK Observables",
-        1012: "Extended L1&L2 GLONASS RTK Observables",
+        1011: "L1 & L2 GLONASS RTK Observables",
+        1012: "Extended L1 & L2 GLONASS RTK Observables",
         1013: "System Parameters",
         1014: "Network Auxiliary Station Data",
         1015: "GPS Ionospheric Correction Differences",
