@@ -145,145 +145,93 @@ class Rtcm3:
         return head, noSats, noSignals, noCells
 
     def decodeRtcmMessage(self, message):
-        messageType = message.peek("uint:12")
         data = []
+        head = []
         satData = []
         signalData = []
+        messageType = message.peek("uint:12")
         if messageType == 1001:
-            data = message.readlist(self.__msg1001Head)
-            for _ in range(data[4]):
-                data.append(message.readlist(self.__msg1001Obs))
+            head = message.readlist(self.__msg1001Head)
+            for _ in range(head[4]):
+                satData.append(message.readlist(self.__msg1001Obs))
         elif messageType == 1002:
-            data = message.readlist(self.__msg1002Head)
-            for _ in range(data[4]):
-                data.append(message.readlist(self.__msg1002Obs))
+            head = message.readlist(self.__msg1002Head)
+            for _ in range(head[4]):
+                satData.append(message.readlist(self.__msg1002Obs))
         elif messageType == 1003:
-            data = message.readlist(self.__msg1003Head)
-            for _ in range(data[4]):
-                data.append(message.readlist(self.__msg1003Obs))
+            head = message.readlist(self.__msg1003Head)
+            for _ in range(head[4]):
+                satData.append(message.readlist(self.__msg1003Obs))
         elif messageType == 1004:
-            data = message.readlist(self.__msg1004Head)
-            for _ in range(data[4]):
-                data.append(message.readlist(self.__msg1004Obs))
+            head = message.readlist(self.__msg1004Head)
+            for _ in range(head[4]):
+                satData.append(message.readlist(self.__msg1004Obs))
 
         elif messageType == 1009:
-            data = message.readlist(self.__msg1009Head)
-            for _ in range(data[4]):
-                data.append(message.readlist(self.__msg1009Obs))
+            head = message.readlist(self.__msg1009Head)
+            for _ in range(head[4]):
+                satData.append(message.readlist(self.__msg1009Obs))
         elif messageType == 1010:
-            data = message.readlist(self.__msg1010Head)
-            for _ in range(data[4]):
-                data.append(message.readlist(self.__msg1010Obs))
+            head = message.readlist(self.__msg1010Head)
+            for _ in range(head[4]):
+                satData.append(message.readlist(self.__msg1010Obs))
         elif messageType == 1011:
-            data = message.readlist(self.__msg1011Head)
-            for _ in range(data[4]):
-                data.append(message.readlist(self.__msg1011Obs))
+            head = message.readlist(self.__msg1011Head)
+            for _ in range(head[4]):
+                satData.append(message.readlist(self.__msg1011Obs))
         elif messageType == 1012:
-            data = message.readlist(self.__msg1012Head)
-            for _ in range(data[4]):
-                data.append(message.readlist(self.__msg1012Obs))
+            head = message.readlist(self.__msg1012Head)
+            for _ in range(head[4]):
+                satData.append(message.readlist(self.__msg1012Obs))
 
         elif (
-            messageType == 1071
-            or messageType == 1081
-            or messageType == 1091
-            or messageType == 1101
-            or messageType == 1111
-            or messageType == 1121
+            (messageType >= 1071 and messageType <= 1077) or
+            (messageType >= 1081 and messageType <= 1087) or
+            (messageType >= 1091 and messageType <= 1097) or
+            (messageType >= 1101 and messageType <= 1107) or
+            (messageType >= 1111 and messageType <= 1117) or
+            (messageType >= 1121 and messageType <= 1127)
         ):
             head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
-            for _ in range(noSats):
-                satData.append(message.readlist(self.__msgMsm123Sat))
-            for _ in range(noCells):
-                signalData.append(message.readlist(self.__msgMsm1Signal))
-            data = [head, satData, signalData]
-        elif (
-            messageType == 1072
-            or messageType == 1082
-            or messageType == 1092
-            or messageType == 1102
-            or messageType == 1112
-            or messageType == 1122
-        ):
-            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
-            for _ in range(noSats):
-                satData.append(message.readlist(self.__msgMsm123Sat))
-            for _ in range(noCells):
-                signalData.append(message.readlist(self.__msgMsm2Signal))
-            data = [head, satData, signalData]
-        elif (
-            messageType == 1073
-            or messageType == 1083
-            or messageType == 1093
-            or messageType == 1103
-            or messageType == 1113
-            or messageType == 1123
-        ):
-            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
-            for _ in range(noSats):
-                satData.append(message.readlist(self.__msgMsm123Sat))
-            for _ in range(noCells):
-                signalData.append(message.readlist(self.__msgMsm3Signal))
-            data = [head, satData, signalData]
-        elif (
-            messageType == 1074
-            or messageType == 1084
-            or messageType == 1094
-            or messageType == 1104
-            or messageType == 1114
-            or messageType == 1124
-        ):
-            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
-            for _ in range(noSats):
-                satData.append(message.readlist(self.__msgMsm46Sat))
-            for _ in range(noCells):
-                signalData.append(message.readlist(self.__msgMsm4Signal))
-            data = [head, satData, signalData]
-        elif (
-            messageType == 1075
-            or messageType == 1085
-            or messageType == 1095
-            or messageType == 1105
-            or messageType == 1115
-            or messageType == 1125
-        ):
-            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
-            for _ in range(noSats):
-                satData.append(message.readlist(self.__msgMsm57Sat))
-            for _ in range(noCells):
-                signalData.append(message.readlist(self.__msgMsm5Signal))
-            data = [head, satData, signalData]
-        elif (
-            messageType == 1076
-            or messageType == 1086
-            or messageType == 1096
-            or messageType == 1106
-            or messageType == 1116
-            or messageType == 1126
-        ):
-            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
-            for _ in range(noSats):
-                satData.append(message.readlist(self.__msgMsm46Sat))
-            for _ in range(noCells):
-                signalData.append(message.readlist(self.__msgMsm6Signal))
-            data = [head, satData, signalData]
-        elif (
-            messageType == 1077
-            or messageType == 1087
-            or messageType == 1097
-            or messageType == 1107
-            or messageType == 1117
-            or messageType == 1127
-        ):
-            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
-            for _ in range(noSats):
-                satData.append(message.readlist(self.__msgMsm57Sat))
-            for _ in range(noCells):
-                signalData.append(message.readlist(self.__msgMsm7Signal))
-            data = [head, satData, signalData]
+            if (
+                (messageType % 10 == 1) or
+                (messageType % 10 == 2) or
+                (messageType % 10 == 3)
+            ):
+                for _ in range(noSats):
+                    satData.append(message.readlist(self.__msgMsm123Sat))
+            elif ((messageType % 10 == 4) or (messageType % 10 == 6)):
+                for _ in range(noSats):
+                    satData.append(message.readlist(self.__msgMsm46Sat))
+            elif ((messageType % 10 == 5) or (messageType % 10 == 7)):
+                for _ in range(noSats):
+                    satData.append(message.readlist(self.__msgMsm57Sat))
+
+            if messageType % 10 == 1:
+                for _ in range(noCells):
+                    signalData.append(message.readlist(self.__msgMsm1Signal))
+            elif messageType % 10 == 2:
+                for _ in range(noCells):
+                    signalData.append(message.readlist(self.__msgMsm2Signal))
+            elif messageType % 10 == 3:
+                for _ in range(noCells):
+                    signalData.append(message.readlist(self.__msgMsm3Signal))
+            elif messageType % 10 == 4:
+                for _ in range(noCells):
+                    signalData.append(message.readlist(self.__msgMsm4Signal))
+            elif messageType % 10 == 5:
+                for _ in range(noCells):
+                    signalData.append(message.readlist(self.__msgMsm5Signal))
+            elif messageType % 10 == 6:
+                for _ in range(noCells):
+                    signalData.append(message.readlist(self.__msgMsm6Signal))
+            elif messageType % 10 == 7:
+                for _ in range(noCells):
+                    signalData.append(message.readlist(self.__msgMsm7Signal))
 
         elif messageType == 1029:
-            data = message.readlist(self.__msg1029)
+            head = message.readlist(self.__msg1029)
+        data = [head, satData, signalData]
         return messageType, data
 
     messageDescription = {
