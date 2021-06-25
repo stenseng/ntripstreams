@@ -38,6 +38,25 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None, fail=0, retry=
     while True:
         try:
             rtcmFrame, timeStamp = await ntripstream.getRtcmFrame()
+            fail = 0
+        except IOError:
+            if fail >= retry:
+                fail += 1
+                sleepTime = 5 * fail
+                if sleepTime > 300:
+                    sleepTime = 300
+                logging.error(
+                    f"{mountPoint}:{fail} failed attempt to reconnect. "
+                    f"Will retry in {sleepTime} seconds!"
+                )
+                await asyncio.sleep(sleepTime)
+                await procRtcmStream(url, mountPoint, user, passwd, fail)
+            else:
+                fail += 1
+                logging.warning(f"{mountPoint}:Reconnecting. Attempt no. {fail}.")
+                await asyncio.sleep(2)
+                await procRtcmStream(url, mountPoint, user, passwd, fail)
+        else:
             messageType, data = rtcmMessage.decodeRtcmFrame(rtcmFrame)
             description = rtcmMessage.messageDescription[messageType]
             logging.debug(
@@ -53,22 +72,17 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None, fail=0, retry=
                 or (messageType >= 1111 and messageType <= 1117)
                 or (messageType >= 1121 and messageType <= 1127)
             ):
-                logging.debug(
+                numSignals = len(data[1])
+                signals = ""
+                if (messageType >= 1071 and messageType <= 1127):
+                    signals = rtcmMessage.msmSignalTypes(messageType, data[0][10])
+                    numSignals = len(data[2])
+                logging.info(
                     f"{mountPoint}:RTCM message #:{messageType} "
                     f"Sats: {len(data[1])}"
-                    f" Signals: {len(data[2])}"
+                    f" Signals: {numSignals}"
+                    f" Signal Types: {signals}"
                 )
-            fail = 0
-        except IOError:
-            if fail >= retry:
-                logging.error(
-                    f"{mountPoint}:{fail} failed attempt to reconnect. Bailing out!"
-                )
-                return
-            else:
-                fail += 1
-                logging.warning(f"{mountPoint}:Reconnecting. Attempt no. {fail}.")
-                await procRtcmStream(url, mountPoint, user, passwd, fail)
 
 
 async def rtcmStreamTasks(url, mountPoints, user, passwd):

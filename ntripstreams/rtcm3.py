@@ -14,146 +14,6 @@ from bitstring import Bits, pack
 
 
 class Rtcm3:
-    __framePreample = Bits(bin="0b11010011")
-    __frameHeaderFormat = "bin:8, pad:6, uint:10, uint:12"
-    __frameFormat = "bin:8, pad:6, uint:10"
-
-    # GPS messages
-    __msg1001_4Head = (
-        "uint:12=refStationId, uint:30=tow, bool=syncGNSSFlag, "
-        "uint:5=numSignalsObs, bool=divFreeSmootFlag, bin:3=smoothInterval"
-    )
-    __msg1001Head = "uint:12=1001, " + __msg1001_4Head
-    __msg1002Head = "uint:12=1002, " + __msg1001_4Head
-    __msg1003Head = "uint:12=1003, " + __msg1001_4Head
-    __msg1004Head = "uint:12=1004, " + __msg1001_4Head
-    __msg1001Obs = (
-        "uint:6=satId, bool=l1CodeFlag, uint:24=l1PseudoRange, "
-        "int:20=l1PhaserangeL1PseudorangeDiff, uint:7=l1LockTimeIndicator"
-    )
-    __msg1002Obs = __msg1001Obs + "uint:8=l1PseudorangeAmbiguity, uint:8=l1CNR"
-    __msg1003Obs = (
-        __msg1001Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
-        "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator"
-    )
-    __msg1004Obs = (
-        __msg1002Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
-        "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator, "
-        "uint:8=l2CNR"
-    )
-
-    # GLONASS messages
-    __msg1009_12Head = (
-        "uint:12=refStationId, uint:27=epochTime, bool=syncGNSSFlag, "
-        "uint:5=numSignalsObs, bool=divFreeSmootFlag, bin:3=smoothInterval"
-    )
-    __msg1009Head = "uint:12=1001, " + __msg1009_12Head
-    __msg1010Head = "uint:12=1002, " + __msg1009_12Head
-    __msg1011Head = "uint:12=1003, " + __msg1009_12Head
-    __msg1012Head = "uint:12=1004, " + __msg1009_12Head
-    __msg1009Obs = (
-        "uint:6=satId, bool=codeFlag, uint:5=freqChannelnum,  uint:24=l1Pseudorange, "
-        "int:20=l1PhaserangeL1PseudorangeDiff, uint:7=l1LockTimeIndicator"
-    )
-    __msg1010Obs = __msg1009Obs + "uint:8=l1PseudorangeAmbiguity, uint:8=l1CNR"
-    __msg1011Obs = (
-        __msg1009Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
-        "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator"
-    )
-    __msg1012Obs = (
-        __msg1010Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
-        "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator, "
-        "uint:8=l2CNR"
-    )
-
-    # Other messages
-    __msg1029 = (
-        "uint:12=1029, uint:12=refStationId, uint:16=mjd, "
-        "uint:17=utc, uint:7=utfChars, uint:8=charBytes, "
-        "bytes=string"
-    )
-
-    # MSM messages
-    __msgMsmHead = (
-        "uint:12=messageType, uint:12=refStationId, uint:30=gnssEpochTime, "
-        "bool=multiMessageFlag, uint:3=iods, pad:7, uint:2=clockSteringIndicator, "
-        "uint:2=extClockIndicator, bool=divFreeSmootFlag, bin:3=smoothInterval, "
-        "bin:64=gnssSatMask, bin:32=gnssSignalMask"
-    )
-    __msgMsm123Sat = ["uint:10=roughRangeMod1ms"]
-    __msgMsm46Sat = ["uint:8=numIntMsRoughRange", "uint:10=roughRangeMod1ms"]
-    __msgMsm57Sat = [
-        "uint:8=numIntMsRoughRange", "uint:4=extSatInfo", "uint:10=roughRangeMod1ms",
-        "int:14=roughPhaseRangeRate"
-    ]
-    __msgMsm1Signal = ["int:15=signalFinePseudorange"]
-    __msgMsm2Signal = [
-        "int:22=signalFinePhaserange", "uint:4=phaserangeLockTimeIndicator",
-        "bool=halfcycleAmbiguity"
-    ]
-    __msgMsm3Signal = __msgMsm1Signal + __msgMsm2Signal
-    __msgMsm4Signal = __msgMsm3Signal + ["uint:6=signalCNR"]
-    __msgMsm5Signal = __msgMsm4Signal + ["int:15=signalFinePhaserangeRate"]
-    __msgMsm6Signal = [
-        "int:20=signalFinePseudorangeExtRes", "int:24=signalFinePhaserangeExtRes",
-        "uint:10=phaserangeLockTimeIndicatorExtRes", "bool=halfcycleAmbiguity"
-        "uint:10=signalCNRExtRes"
-    ]
-    __msgMsm7Signal = __msgMsm6Signal + ["int:15=signalFinePhaserangeRate"]
-
-    # MSM observation types
-    __msmSignalTypes = {
-        "GPS": [
-            "Res", "L1C", "L1P", "L1W", "Res", "Res", "Res",
-            "L2C", "L2P", "L2W", "Res", "Res", "Res", "Res",
-            "L2S", "L2L", "L2X", "Res", "Res", "Res", "Res",
-            "L5I", "L5Q", "L5X", "Res", "Res", "Res", "Res",
-            "Res", "L1S", "L1L", "L1X"
-        ],
-        "GLONASS": [
-            "Res", "G1C", "G1P", "Res", "Res", "Res", "Res",
-            "G2C", "G2P", "Res", "Res", "Res", "Res", "Res",
-            "Res", "Res", "Res", "Res", "Res", "Res", "Res",
-            "Res", "Res", "Res", "Res", "Res", "Res", "Res",
-            "Res", "Res", "Res", "Res"
-        ],
-        "GALILEO": [
-            "Res", "E1C", "E1A", "E1B", "E1X", "E1Z", "Res",
-            "E6C", "E6A", "E6B", "E6X", "E6Z", "Res",
-            "E7I", "E7Q", "E7X", "Res",
-            "E8I", "E8Q", "E8X", "Res",
-            "E5I", "E5Q", "E5X", "Res",
-            "Res", "Res", "Res", "Res", "Res", "Res", "Res"
-        ],
-        "BEIDOU": [
-            "Res", "B2I", "B2Q", "B2X", "Res", "Res", "Res",
-            "B6I", "B6Q", "B6X", "Res", "Res", "Res",
-            "B7I", "B7Q", "B7X", "Res", "Res", "Res",
-            "Res", "Res", "Res", "Res", "Res", "Res", "Res",
-            "Res", "Res", "Res", "Res", "Res", "Res",
-        ],
-        "QZSS": [
-            "Res", "L1C", "Res", "Res", "Res", "Res", "Res",
-            "Res", "L6S", "L6L", "L6X", "Res", "Res", "Res",
-            "L2S", "L2L", "L2X", "Res", "Res", "Res", "Res",
-            "L5I", "L5Q", "L5X", "Res", "Res", "Res", "Res",
-            "Res", "L1S", "L1L", "L1X"
-        ],
-        "SBAS": [
-            "Res", "L1C", "Res", "Res", "Res", "Res", "Res",
-            "Res", "Res", "Res", "Res", "Res", "Res", "Res",
-            "Res", "Res", "Res", "Res", "Res", "Res", "Res",
-            "L5I", "L5Q", "L5X", "Res", "Res", "Res", "Res",
-            "Res", "Res", "Res", "Res"
-        ]
-    }
-
-    # MSM constellations
-    __msmConstellations = {
-        7: "GPS", 8: "GLONASS", 9: "GALILEO", 10: "SBAS", 11: "QZSS", 12: "BEIDOU"
-    }
-    msmSignalTypes = __msmSignalTypes
-
     def __init__(self):
         pass
 
@@ -168,7 +28,8 @@ class Rtcm3:
     def msmSignalTypes(self, messageType: int, msmSignals):
         signals = [
             self.__msmSignalTypes[self.msmConstellation(messageType)][i]
-            for i, mask in enumerate(msmSignals) if mask == "1"
+            for i, mask in enumerate(msmSignals)
+            if mask == "1"
         ]
         return signals
 
@@ -424,4 +285,314 @@ class Rtcm3:
         1130: "Reserved MSM",
         1230: "GLONASS L1 and L2 Code-Phase Biases"
         # 4001-4095: "Proprietary Messages"
+    }
+
+    __framePreample = Bits(bin="0b11010011")
+    __frameHeaderFormat = "bin:8, pad:6, uint:10, uint:12"
+    __frameFormat = "bin:8, pad:6, uint:10"
+
+    # GPS messages
+    __msg1001_4Head = (
+        "uint:12=refStationId, uint:30=tow, bool=syncGNSSFlag, "
+        "uint:5=numSignalsObs, bool=divFreeSmootFlag, bin:3=smoothInterval"
+    )
+    __msg1001Head = "uint:12=1001, " + __msg1001_4Head
+    __msg1002Head = "uint:12=1002, " + __msg1001_4Head
+    __msg1003Head = "uint:12=1003, " + __msg1001_4Head
+    __msg1004Head = "uint:12=1004, " + __msg1001_4Head
+    __msg1001Obs = (
+        "uint:6=satId, bool=l1CodeFlag, uint:24=l1PseudoRange, "
+        "int:20=l1PhaserangeL1PseudorangeDiff, uint:7=l1LockTimeIndicator"
+    )
+    __msg1002Obs = __msg1001Obs + "uint:8=l1PseudorangeAmbiguity, uint:8=l1CNR"
+    __msg1003Obs = (
+        __msg1001Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
+        "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator"
+    )
+    __msg1004Obs = (
+        __msg1002Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
+        "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator, "
+        "uint:8=l2CNR"
+    )
+
+    # GLONASS messages
+    __msg1009_12Head = (
+        "uint:12=refStationId, uint:27=epochTime, bool=syncGNSSFlag, "
+        "uint:5=numSignalsObs, bool=divFreeSmootFlag, bin:3=smoothInterval"
+    )
+    __msg1009Head = "uint:12=1001, " + __msg1009_12Head
+    __msg1010Head = "uint:12=1002, " + __msg1009_12Head
+    __msg1011Head = "uint:12=1003, " + __msg1009_12Head
+    __msg1012Head = "uint:12=1004, " + __msg1009_12Head
+    __msg1009Obs = (
+        "uint:6=satId, bool=codeFlag, uint:5=freqChannelnum,  uint:24=l1Pseudorange, "
+        "int:20=l1PhaserangeL1PseudorangeDiff, uint:7=l1LockTimeIndicator"
+    )
+    __msg1010Obs = __msg1009Obs + "uint:8=l1PseudorangeAmbiguity, uint:8=l1CNR"
+    __msg1011Obs = (
+        __msg1009Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
+        "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator"
+    )
+    __msg1012Obs = (
+        __msg1010Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
+        "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator, "
+        "uint:8=l2CNR"
+    )
+
+    # Other messages
+    __msg1029 = (
+        "uint:12=1029, uint:12=refStationId, uint:16=mjd, "
+        "uint:17=utc, uint:7=utfChars, uint:8=charBytes, "
+        "bytes=string"
+    )
+
+    # MSM messages
+    __msgMsmHead = (
+        "uint:12=messageType, uint:12=refStationId, uint:30=gnssEpochTime, "
+        "bool=multiMessageFlag, uint:3=iods, pad:7, uint:2=clockSteringIndicator, "
+        "uint:2=extClockIndicator, bool=divFreeSmootFlag, bin:3=smoothInterval, "
+        "bin:64=gnssSatMask, bin:32=gnssSignalMask"
+    )
+    __msgMsm123Sat = ["uint:10=roughRangeMod1ms"]
+    __msgMsm46Sat = ["uint:8=numIntMsRoughRange", "uint:10=roughRangeMod1ms"]
+    __msgMsm57Sat = [
+        "uint:8=numIntMsRoughRange",
+        "uint:4=extSatInfo",
+        "uint:10=roughRangeMod1ms",
+        "int:14=roughPhaseRangeRate",
+    ]
+    __msgMsm1Signal = ["int:15=signalFinePseudorange"]
+    __msgMsm2Signal = [
+        "int:22=signalFinePhaserange",
+        "uint:4=phaserangeLockTimeIndicator",
+        "bool=halfcycleAmbiguity",
+    ]
+    __msgMsm3Signal = __msgMsm1Signal + __msgMsm2Signal
+    __msgMsm4Signal = __msgMsm3Signal + ["uint:6=signalCNR"]
+    __msgMsm5Signal = __msgMsm4Signal + ["int:15=signalFinePhaserangeRate"]
+    __msgMsm6Signal = [
+        "int:20=signalFinePseudorangeExtRes",
+        "int:24=signalFinePhaserangeExtRes",
+        "uint:10=phaserangeLockTimeIndicatorExtRes",
+        "bool=halfcycleAmbiguity",
+        "uint:10=signalCNRExtRes",
+    ]
+    __msgMsm7Signal = __msgMsm6Signal + ["int:15=signalFinePhaserangeRate"]
+
+    # MSM observation types
+    __msmSignalTypes = {
+        "GPS": [
+            "Res",
+            "L1C",
+            "L1P",
+            "L1W",
+            "Res",
+            "Res",
+            "Res",
+            "L2C",
+            "L2P",
+            "L2W",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "L2S",
+            "L2L",
+            "L2X",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "L5I",
+            "L5Q",
+            "L5X",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "L1S",
+            "L1L",
+            "L1X",
+        ],
+        "GLONASS": [
+            "Res",
+            "G1C",
+            "G1P",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "G2C",
+            "G2P",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+        ],
+        "GALILEO": [
+            "Res",
+            "E1C",
+            "E1A",
+            "E1B",
+            "E1X",
+            "E1Z",
+            "Res",
+            "E6C",
+            "E6A",
+            "E6B",
+            "E6X",
+            "E6Z",
+            "Res",
+            "E7I",
+            "E7Q",
+            "E7X",
+            "Res",
+            "E8I",
+            "E8Q",
+            "E8X",
+            "Res",
+            "E5I",
+            "E5Q",
+            "E5X",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+        ],
+        "BEIDOU": [
+            "Res",
+            "B2I",
+            "B2Q",
+            "B2X",
+            "Res",
+            "Res",
+            "Res",
+            "B6I",
+            "B6Q",
+            "B6X",
+            "Res",
+            "Res",
+            "Res",
+            "B7I",
+            "B7Q",
+            "B7X",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+        ],
+        "QZSS": [
+            "Res",
+            "L1C",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "L6S",
+            "L6L",
+            "L6X",
+            "Res",
+            "Res",
+            "Res",
+            "L2S",
+            "L2L",
+            "L2X",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "L5I",
+            "L5Q",
+            "L5X",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "L1S",
+            "L1L",
+            "L1X",
+        ],
+        "SBAS": [
+            "Res",
+            "L1C",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "L5I",
+            "L5Q",
+            "L5X",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+            "Res",
+        ],
+    }
+
+    # MSM constellations
+    __msmConstellations = {
+        7: "GPS",
+        8: "GLONASS",
+        9: "GALILEO",
+        10: "SBAS",
+        11: "QZSS",
+        12: "BEIDOU",
     }
