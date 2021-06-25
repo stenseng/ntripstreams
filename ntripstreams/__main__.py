@@ -74,7 +74,7 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None, fail=0, retry=
             ):
                 numSignals = len(data[1])
                 signals = ""
-                if (messageType >= 1071 and messageType <= 1127):
+                if messageType >= 1071 and messageType <= 1127:
                     signals = rtcmMessage.msmSignalTypes(messageType, data[0][10])
                     numSignals = len(data[2])
                 logging.info(
