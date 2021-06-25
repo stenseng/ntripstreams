@@ -7,6 +7,7 @@ i@author: Lars Stenseng
 @mail: lars@stenseng.net
 """
 
+import logging
 from time import time
 
 from bitstring import Bits, pack
@@ -20,7 +21,7 @@ class Rtcm3:
     # GPS messages
     __msg1001_4Head = (
         "uint:12=refStationId, uint:30=tow, bool=syncGNSSFlag, "
-        "uint:5=noSignalsObs, bool=divFreeSmootFlag, bin:3=smoothInterval"
+        "uint:5=numSignalsObs, bool=divFreeSmootFlag, bin:3=smoothInterval"
     )
     __msg1001Head = "uint:12=1001, " + __msg1001_4Head
     __msg1002Head = "uint:12=1002, " + __msg1001_4Head
@@ -44,14 +45,14 @@ class Rtcm3:
     # GLONASS messages
     __msg1009_12Head = (
         "uint:12=refStationId, uint:27=epochTime, bool=syncGNSSFlag, "
-        "uint:5=noSignalsObs, bool=divFreeSmootFlag, bin:3=smoothInterval"
+        "uint:5=numSignalsObs, bool=divFreeSmootFlag, bin:3=smoothInterval"
     )
     __msg1009Head = "uint:12=1001, " + __msg1009_12Head
     __msg1010Head = "uint:12=1002, " + __msg1009_12Head
     __msg1011Head = "uint:12=1003, " + __msg1009_12Head
     __msg1012Head = "uint:12=1004, " + __msg1009_12Head
     __msg1009Obs = (
-        "uint:6=satId, bool=codeFlag, uint:5=freqChannelNo,  uint:24=l1Pseudorange, "
+        "uint:6=satId, bool=codeFlag, uint:5=freqChannelnum,  uint:24=l1Pseudorange, "
         "int:20=l1PhaserangeL1PseudorangeDiff, uint:7=l1LockTimeIndicator"
     )
     __msg1010Obs = __msg1009Obs + "uint:8=l1PseudorangeAmbiguity, uint:8=l1CNR"
@@ -74,31 +75,84 @@ class Rtcm3:
 
     # MSM messages
     __msgMsmHead = (
-        "uint:12=refStationId, uint:30=gnssEpochTime, bool=multiMessageFlag, "
-        "uint:3=iods, pad:7, uint:2=clockSteringIndicator, uint:2=extClockIndicator, "
-        "bool=divFreeSmootFlag, bin:3=smoothInterval, bin:64=gnssSatMask, "
-        "bin:32=gnssSignalMask"  # Husk Cell mask bin:Nsats * Nsigs
+        "uint:12=messageType, uint:12=refStationId, uint:30=gnssEpochTime, "
+        "bool=multiMessageFlag, uint:3=iods, pad:7, uint:2=clockSteringIndicator, "
+        "uint:2=extClockIndicator, bool=divFreeSmootFlag, bin:3=smoothInterval, "
+        "bin:64=gnssSatMask, bin:32=gnssSignalMask"
     )
-    __msgMsm123Sat = "uint:10=roughRangeMod1ms"
-    __msgMsm46Sat = "uint:8=noIntMsRoughRange, uint:10=roughRangeMod1ms"
-    __msgMsm57Sat = (
-        "uint:8=noIntMsRoughRange, uint:4=extSatInfo, uint:10=roughRangeMod1ms, "
+    __msgMsm123Sat = ["uint:10=roughRangeMod1ms"]
+    __msgMsm46Sat = ["uint:8=numIntMsRoughRange", "uint:10=roughRangeMod1ms"]
+    __msgMsm57Sat = [
+        "uint:8=numIntMsRoughRange", "uint:4=extSatInfo", "uint:10=roughRangeMod1ms",
         "int:14=roughPhaseRangeRate"
-    )
-    __msgMsm1Signal = "int:15=signalFinePseudorange"
-    __msgMsm2Signal = (
-        "int:22=signalFinePhaserange, uint:4=phaserangeLockTimeIndicator, "
+    ]
+    __msgMsm1Signal = ["int:15=signalFinePseudorange"]
+    __msgMsm2Signal = [
+        "int:22=signalFinePhaserange", "uint:4=phaserangeLockTimeIndicator",
         "bool=halfcycleAmbiguity"
-    )
-    __msgMsm3Signal = __msgMsm1Signal + ", " + __msgMsm2Signal
-    __msgMsm4Signal = __msgMsm3Signal + ", uint:6=signalCNR"
-    __msgMsm5Signal = __msgMsm4Signal + ", int:15=signalFinePhaserangeRate"
-    __msgMsm6Signal = (
-        "int:20=signalFinePseudorangeExtRes, int:24=signalFinePhaserangeExtRes, "
-        "uint:10=phaserangeLockTimeIndicatorExtRes, bool=halfcycleAmbiguity"
+    ]
+    __msgMsm3Signal = __msgMsm1Signal + __msgMsm2Signal
+    __msgMsm4Signal = __msgMsm3Signal + ["uint:6=signalCNR"]
+    __msgMsm5Signal = __msgMsm4Signal + ["int:15=signalFinePhaserangeRate"]
+    __msgMsm6Signal = [
+        "int:20=signalFinePseudorangeExtRes", "int:24=signalFinePhaserangeExtRes",
+        "uint:10=phaserangeLockTimeIndicatorExtRes", "bool=halfcycleAmbiguity"
         "uint:10=signalCNRExtRes"
-    )
-    __msgMsm7Signal = __msgMsm6Signal + ", int:15=signalFinePhaserangeRate"
+    ]
+    __msgMsm7Signal = __msgMsm6Signal + ["int:15=signalFinePhaserangeRate"]
+
+    # MSM observation types
+    __msmSignalTypes = {
+        "GPS": [
+            "Res", "L1C", "L1P", "L1W", "Res", "Res", "Res",
+            "L2C", "L2P", "L2W", "Res", "Res", "Res", "Res",
+            "L2S", "L2L", "L2X", "Res", "Res", "Res", "Res",
+            "L5I", "L5Q", "L5X", "Res", "Res", "Res", "Res",
+            "Res", "L1S", "L1L", "L1X"
+        ],
+        "GLONASS": [
+            "Res", "G1C", "G1P", "Res", "Res", "Res", "Res",
+            "G2C", "G2P", "Res", "Res", "Res", "Res", "Res",
+            "Res", "Res", "Res", "Res", "Res", "Res", "Res",
+            "Res", "Res", "Res", "Res", "Res", "Res", "Res",
+            "Res", "Res", "Res", "Res"
+        ],
+        "GALILEO": [
+            "Res", "E1C", "E1A", "E1B", "E1X", "E1Z", "Res",
+            "E6C", "E6A", "E6B", "E6X", "E6Z", "Res",
+            "E7I", "E7Q", "E7X", "Res",
+            "E8I", "E8Q", "E8X", "Res",
+            "E5I", "E5Q", "E5X", "Res",
+            "Res", "Res", "Res", "Res", "Res", "Res", "Res"
+        ],
+        "BEIDOU": [
+            "Res", "B2I", "B2Q", "B2X", "Res", "Res", "Res",
+            "B6I", "B6Q", "B6X", "Res", "Res", "Res",
+            "B7I", "B7Q", "B7X", "Res", "Res", "Res",
+            "Res", "Res", "Res", "Res", "Res", "Res", "Res",
+            "Res", "Res", "Res", "Res", "Res", "Res",
+        ],
+        "QZSS": [
+            "Res", "L1C", "Res", "Res", "Res", "Res", "Res",
+            "Res", "L6S", "L6L", "L6X", "Res", "Res", "Res",
+            "L2S", "L2L", "L2X", "Res", "Res", "Res", "Res",
+            "L5I", "L5Q", "L5X", "Res", "Res", "Res", "Res",
+            "Res", "L1S", "L1L", "L1X"
+        ],
+        "SBAS": [
+            "Res", "L1C", "Res", "Res", "Res", "Res", "Res",
+            "Res", "Res", "Res", "Res", "Res", "Res", "Res",
+            "Res", "Res", "Res", "Res", "Res", "Res", "Res",
+            "L5I", "L5Q", "L5X", "Res", "Res", "Res", "Res",
+            "Res", "Res", "Res", "Res"
+        ]
+    }
+
+    # MSM constellations
+    __msmConstellations = {
+        7: "GPS", 8: "GLONASS", 9: "GALILEO", 10: "SBAS", 11: "QZSS", 12: "BEIDOU"
+    }
+    msmSignalTypes = __msmSignalTypes
 
     def __init__(self):
         pass
@@ -106,6 +160,17 @@ class Rtcm3:
     def mjd(self, unixTimestamp):
         mjd = int(unixTimestamp / 86400.0 + 40587.0)
         return mjd
+
+    def msmConstellation(self, messageType: int):
+        constellation = self.__msmConstellations[int(messageType / 10) % 100]
+        return constellation
+
+    def msmSignalTypes(self, messageType: int, msmSignals):
+        signals = [
+            self.__msmSignalTypes[self.msmConstellation(messageType)][i]
+            for i, mask in enumerate(msmSignals) if mask == "1"
+        ]
+        return signals
 
     def encodeRtcmFrame(self, messageType: int, dataDict):
         message = self.encodeRtcmMessage(messageType, dataDict)
@@ -137,12 +202,12 @@ class Rtcm3:
 
     def __decodeMsmHeader(self, message):
         head = message.readlist(self.__msgMsmHead)
-        noSats = Bits(bin=head[8]).bin.count("1")
-        noSignals = Bits(bin=head[9]).bin.count("1")
-        cellMask = message.read(f"bin:{noSats * noSignals}")
+        numSats = Bits(bin=head[9]).bin.count("1")
+        numSignals = Bits(bin=head[10]).bin.count("1")
+        cellMask = message.read(f"bin:{numSats * numSignals}")
         head.append(cellMask)
-        noCells = Bits(bin=head[10]).bin.count("1")
-        return head, noSats, noSignals, noCells
+        numCells = Bits(bin=head[11]).bin.count("1")
+        return head, numSats, numSignals, numCells
 
     def decodeRtcmMessage(self, message):
         data = []
@@ -150,6 +215,7 @@ class Rtcm3:
         satData = []
         signalData = []
         messageType = message.peek("uint:12")
+        logging.debug(f"Decoding message type {messageType}")
         if messageType == 1001:
             head = message.readlist(self.__msg1001Head)
             for _ in range(head[4]):
@@ -192,42 +258,46 @@ class Rtcm3:
             or (messageType >= 1111 and messageType <= 1117)
             or (messageType >= 1121 and messageType <= 1127)
         ):
-            head, noSats, noSignals, noCells = self.__decodeMsmHeader(message)
+            head, numSats, numSignals, numCells = self.__decodeMsmHeader(message)
             if (
                 (messageType % 10 == 1)
                 or (messageType % 10 == 2)
                 or (messageType % 10 == 3)
             ):
-                for _ in range(noSats):
-                    satData.append(message.readlist(self.__msgMsm123Sat))
+                for obs in self.__msgMsm123Sat:
+                    satData.append(message.readlist(f"{numSats}*{obs}"))
             elif (messageType % 10 == 4) or (messageType % 10 == 6):
-                for _ in range(noSats):
-                    satData.append(message.readlist(self.__msgMsm46Sat))
+                for obs in self.__msgMsm46Sat:
+                    satData.append(message.readlist(f"{numSats}*{obs}"))
             elif (messageType % 10 == 5) or (messageType % 10 == 7):
-                for _ in range(noSats):
-                    satData.append(message.readlist(self.__msgMsm57Sat))
+                for obs in self.__msgMsm57Sat:
+                    satData.append(message.readlist(f"{numSats}*{obs}"))
+            satData = [[row[i] for row in satData] for i in range(len(satData[0]))]
 
             if messageType % 10 == 1:
-                for _ in range(noCells):
-                    signalData.append(message.readlist(self.__msgMsm1Signal))
+                for obs in self.__msgMsm1Signal:
+                    signalData.append(message.readlist(f"{numCells}*{obs}"))
             elif messageType % 10 == 2:
-                for _ in range(noCells):
-                    signalData.append(message.readlist(self.__msgMsm2Signal))
+                for obs in self.__msgMsm2Signal:
+                    signalData.append(message.readlist(f"{numCells}*{obs}"))
             elif messageType % 10 == 3:
-                for _ in range(noCells):
-                    signalData.append(message.readlist(self.__msgMsm3Signal))
+                for obs in self.__msgMsm3Signal:
+                    signalData.append(message.readlist(f"{numCells}*{obs}"))
             elif messageType % 10 == 4:
-                for _ in range(noCells):
-                    signalData.append(message.readlist(self.__msgMsm4Signal))
+                for obs in self.__msgMsm4Signal:
+                    signalData.append(message.readlist(f"{numCells}*{obs}"))
             elif messageType % 10 == 5:
-                for _ in range(noCells):
-                    signalData.append(message.readlist(self.__msgMsm5Signal))
+                for obs in self.__msgMsm5Signal:
+                    signalData.append(message.readlist(f"{numCells}*{obs}"))
             elif messageType % 10 == 6:
-                for _ in range(noCells):
-                    signalData.append(message.readlist(self.__msgMsm6Signal))
+                for obs in self.__msgMsm6Signal:
+                    signalData.append(message.readlist(f"{numCells}*{obs}"))
             elif messageType % 10 == 7:
-                for _ in range(noCells):
-                    signalData.append(message.readlist(self.__msgMsm7Signal))
+                for obs in self.__msgMsm7Signal:
+                    signalData.append(message.readlist(f"{numCells}*{obs}"))
+            signalData = [
+                [row[i] for row in signalData] for i in range(len(signalData[0]))
+            ]
 
         elif messageType == 1029:
             head = message.readlist(self.__msg1029)

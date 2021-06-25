@@ -150,7 +150,12 @@ class NtripStream:
                 endOfHeader = True
                 break
             if not endOfHeader:
+                if "Transfer-Encoding: chunked".lower() in str.lower(line):
+                    self.ntripStreamChunked = True
+                    logging.info(f"{self.ntripMountPoint}:Stream is chunked")
                 self.ntripResponseHeader.append(line)
+        for line in self.ntripResponseHeader:
+            logging.debug(f"{self.ntripMountPoint}:TCP response: {line}")
         statusResponse = self.ntripResponseHeader[0].split(" ")
         if len(statusResponse) > 1:
             self.ntripResponseStatusCode = statusResponse[1]
@@ -159,9 +164,6 @@ class NtripStream:
 
     def ntripResponseStatusOk(self):
         if self.ntripResponseStatusCode == "200":
-            if "Transfer-Encoding: chunked" in self.ntripResponseHeader:
-                logging.info(f"{self.ntripMountPoint}:Stream is chunked")
-                self.ntripStreamChunked = True
             self.rtcmFramePreample = False
             self.rtcmFrameAligned = False
             return True
@@ -262,6 +264,8 @@ class NtripStream:
             rawLine = await self.ntripReader.readuntil(b"\r\n")
             timeStamp = time()
             receivedBytes = BitStream(rawLine[:-2])
+            if self.ntripStreamChunked:
+                logging.debug(f"Chunk {receivedBytes.length}:{length * 8}. ")
             if self.ntripStreamChunked and receivedBytes.length != length * 8:
                 logging.error(
                     f"{self.ntripMountPoint}:Chunk incomplete "
