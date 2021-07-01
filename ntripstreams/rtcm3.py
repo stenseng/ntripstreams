@@ -320,10 +320,10 @@ class Rtcm3:
         "uint:12=refStationId, uint:27=epochTime, bool=syncGNSSFlag, "
         "uint:5=numSignalsObs, bool=divFreeSmootFlag, bin:3=smoothInterval"
     )
-    __msg1009Head = "uint:12=1001, " + __msg1009_12Head
-    __msg1010Head = "uint:12=1002, " + __msg1009_12Head
-    __msg1011Head = "uint:12=1003, " + __msg1009_12Head
-    __msg1012Head = "uint:12=1004, " + __msg1009_12Head
+    __msg1009Head = "uint:12=1009, " + __msg1009_12Head
+    __msg1010Head = "uint:12=1010, " + __msg1009_12Head
+    __msg1011Head = "uint:12=1011, " + __msg1009_12Head
+    __msg1012Head = "uint:12=1012, " + __msg1009_12Head
     __msg1009Obs = (
         "uint:6=satId, bool=codeFlag, uint:5=freqChannelnum,  uint:24=l1Pseudorange, "
         "int:20=l1PhaserangeL1PseudorangeDiff, uint:7=l1LockTimeIndicator"

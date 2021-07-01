@@ -176,7 +176,7 @@ class NtripStream:
                 logging.error(f"{self.ntripMountPoint}:TCP response: {line}")
             raise ConnectionRefusedError(
                 f"{self.ntripMountPoint}:" f"{self.ntripResponseHeader[0]}"
-            )
+            ) from None
             self.ntripWriter.close()
             return False
 
@@ -194,6 +194,9 @@ class NtripStream:
             for line in self.ntripResponseHeader:
                 logging.error(f"TCP response: {line}")
             self.ntripWriter.close()
+            raise ConnectionRefusedError(
+                f"{self.casterUrl.geturl()}:" f"{self.ntripResponseHeader[0]}"
+            ) from None
         while True:
             line = await self.ntripReader.readline()
             if not line:
@@ -272,7 +275,7 @@ class NtripStream:
                     f"{receivedBytes.length}:{length * 8}. "
                     "Closing connection! "
                 )
-                raise IOError("Chunk incomplete ")
+                raise IOError("Chunk incomplete ") from None
             self.rtcmFrameBuffer += receivedBytes
             if not self.rtcmFrameAligned:
                 rtcmFramePos = self.rtcmFrameBuffer.find(
