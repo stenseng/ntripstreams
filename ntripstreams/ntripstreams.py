@@ -264,11 +264,13 @@ class NtripStream:
             if self.ntripStreamChunked:
                 rawLine = await self.ntripReader.readuntil(b"\r\n")
                 length = int(rawLine[:-2].decode("ISO-8859-1"), 16)
-            rawLine = await self.ntripReader.readuntil(b"\r\n")
-            timeStamp = time()
-            receivedBytes = BitStream(rawLine[:-2])
-            if self.ntripStreamChunked:
+                rawLine = await self.ntripReader.readexactly(length + 2)
+                receivedBytes = BitStream(rawLine[:-2])
                 logging.debug(f"Chunk {receivedBytes.length}:{length * 8}. ")
+            else:
+                rawLine = await self.ntripReader.read()
+                receivedBytes = BitStream(rawLine)
+            timeStamp = time()
             if self.ntripStreamChunked and receivedBytes.length != length * 8:
                 logging.error(
                     f"{self.ntripMountPoint}:Chunk incomplete "
