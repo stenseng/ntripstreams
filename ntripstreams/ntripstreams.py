@@ -265,10 +265,16 @@ class NtripStream:
                 rawLine = await self.ntripReader.readuntil(b"\r\n")
                 length = int(rawLine[:-2].decode("ISO-8859-1"), 16)
                 rawLine = await self.ntripReader.readexactly(length + 2)
+                if rawLine[-2:] != b"\r\n":
+                    logging.error(
+                        f"{self.ntripMountPoint}:Chunk malformed. "
+                        "Expected \r\n as ending. Closing connection!"
+                    )
+                    raise IOError("Chunk malformed ") from None
                 receivedBytes = BitStream(rawLine[:-2])
                 logging.debug(f"Chunk {receivedBytes.length}:{length * 8}. ")
             else:
-                rawLine = await self.ntripReader.read()
+                rawLine = await self.ntripReader.read(2048)
                 receivedBytes = BitStream(rawLine)
             timeStamp = time()
             if self.ntripStreamChunked and receivedBytes.length != length * 8:
