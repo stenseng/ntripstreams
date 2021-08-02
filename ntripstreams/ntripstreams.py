@@ -54,7 +54,7 @@ class NtripStream:
         timestamp = strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
         self.ntripRequestHeader = (
             f"GET / HTTP/1.1\r\n"
-            f"Host: {self.casterUrl.geturl()}\r\n"
+            f"Host: {self.casterUrl.netloc}\r\n"
             f"Ntrip-Version: Ntrip/"
             f"{self.ntripVersion}.0\r\n"
             f"User-Agent: NTRIP {self.__CLIENTNAME}\r\n"
@@ -83,7 +83,7 @@ class NtripStream:
             self.ntripAuthString = f"Authorization: Basic {ntripAuth}\r\n"
         self.ntripRequestHeader = (
             f"GET /{ntripMountPoint} HTTP/1.1\r\n"
-            f"Host: {self.casterUrl.geturl()}\r\n"
+            f"Host: {self.casterUrl.netloc}\r\n"
             "Ntrip-Version: Ntrip/"
             f"{self.ntripVersion}.0\r\n"
             f"User-Agent: NTRIP {self.__CLIENTNAME}\r\n"
@@ -115,7 +115,7 @@ class NtripStream:
             self.ntripAuthString = f"Authorization: Basic {ntripAuth}\r\n"
             self.ntripRequestHeader = (
                 f"POST /{ntripMountPoint} HTTP/1.1\r\n"
-                f"Host: {self.casterUrl.geturl()}\r\n"
+                f"Host: {self.casterUrl.netloc}\r\n"
                 "Ntrip-Version: Ntrip/"
                 f"{self.ntripVersion}.0\r\n"
                 + self.ntripAuthString
@@ -187,6 +187,9 @@ class NtripStream:
         self.ntripWriter.write(self.ntripRequestHeader)
         await self.ntripWriter.drain()
         logging.info("Sourcetable request sent.")
+        requestHeader = self.ntripRequestHeader.decode("ISO-8859-1").split("\r\n")
+        for line in requestHeader:
+            logging.debug(f"TCP request: {line}")
         ntripSourcetable = []
         await self.getNtripResponseHeader()
         if self.ntripResponseStatusCode != "200":
@@ -230,6 +233,9 @@ class NtripStream:
         )
         self.ntripWriter.write(self.ntripRequestHeader)
         await self.ntripWriter.drain()
+        requestHeader = self.ntripRequestHeader.decode("ISO-8859-1").split("\r\n")
+        for line in requestHeader:
+            logging.debug(f"TCP request: {line}")
         logging.info(f"{self.ntripMountPoint}:Request server header sent.")
         await self.getNtripResponseHeader()
         logging.debug(self.ntripResponseHeader)
@@ -252,6 +258,9 @@ class NtripStream:
         )
         self.ntripWriter.write(self.ntripRequestHeader)
         await self.ntripWriter.drain()
+        requestHeader = self.ntripRequestHeader.decode("ISO-8859-1").split("\r\n")
+        for line in requestHeader:
+            logging.debug(f"TCP request: {line}")
         logging.info(f"{self.ntripMountPoint}:Request stream header sent.")
         await self.getNtripResponseHeader()
         self.ntripResponseStatusOk()
