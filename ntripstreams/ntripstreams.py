@@ -136,26 +136,33 @@ class NtripStream:
                 "\r\n"
             ).encode("ISO-8859-1")
 
+    def getHeaderStrings(self, rawHeader):
+        if isinstance(rawHeader, bytes):
+            headerStrings = rawHeader.decode("ISO-8859-1").split("\r\n")
+        if isinstance(rawHeader, list):
+            headerStrings = []
+            for rawLine in rawHeader:
+                headerStrings.append(rawLine.decode("ISO-8859-1").rstrip())
+        return headerStrings
+
     async def getNtripResponseHeader(self):
         self.ntripResponseHeader = []
         ntripResponseHeaderTimestamp = []
-        endOfHeader = False
+        rawHeader = []
         while True:
             line = await self.ntripReader.readline()
             ntripResponseHeaderTimestamp.append(time())
             if not line:
                 break
-            line = line.decode("ISO-8859-1").rstrip()
-            if line == "":
-                endOfHeader = True
+            rawHeader.append(line)
+            if line.decode("ISO-8859-1").rstrip() == "":
                 break
-            if not endOfHeader:
-                if "Transfer-Encoding: chunked".lower() in str.lower(line):
-                    self.ntripStreamChunked = True
-                    logging.info(f"{self.ntripMountPoint}:Stream is chunked")
-                self.ntripResponseHeader.append(line)
-        for line in self.ntripResponseHeader:
-            logging.debug(f"{self.ntripMountPoint}:TCP response: {line}")
+        self.ntripResponseHeader = self.getHeaderStrings(rawHeader)
+        if "Transfer-Encoding: chunked".lower() in [
+            line.lower() for line in self.ntripResponseHeader
+        ]:
+            self.ntripStreamChunked = True
+            logging.info(f"{self.ntripMountPoint}:Stream is chunked")
         statusResponse = self.ntripResponseHeader[0].split(" ")
         if len(statusResponse) > 1:
             self.ntripResponseStatusCode = statusResponse[1]
@@ -187,8 +194,7 @@ class NtripStream:
         self.ntripWriter.write(self.ntripRequestHeader)
         await self.ntripWriter.drain()
         logging.info("Sourcetable request sent.")
-        requestHeader = self.ntripRequestHeader.decode("ISO-8859-1").split("\r\n")
-        for line in requestHeader:
+        for line in self.getHeaderStrings(self.ntripRequestHeader):
             logging.debug(f"TCP request: {line}")
         ntripSourcetable = []
         await self.getNtripResponseHeader()
@@ -200,6 +206,9 @@ class NtripStream:
             raise ConnectionRefusedError(
                 f"{self.casterUrl.geturl()}:" f"{self.ntripResponseHeader[0]}"
             ) from None
+        else:
+            for line in self.ntripResponseHeader:
+                logging.debug(f"TCP response: {line}")
         while True:
             line = await self.ntripReader.readline()
             if not line:
@@ -233,8 +242,7 @@ class NtripStream:
         )
         self.ntripWriter.write(self.ntripRequestHeader)
         await self.ntripWriter.drain()
-        requestHeader = self.ntripRequestHeader.decode("ISO-8859-1").split("\r\n")
-        for line in requestHeader:
+        for line in self.getHeaderStrings(self.ntripRequestHeader):
             logging.debug(f"TCP request: {line}")
         logging.info(f"{self.ntripMountPoint}:Request server header sent.")
         await self.getNtripResponseHeader()
@@ -258,12 +266,13 @@ class NtripStream:
         )
         self.ntripWriter.write(self.ntripRequestHeader)
         await self.ntripWriter.drain()
-        requestHeader = self.ntripRequestHeader.decode("ISO-8859-1").split("\r\n")
-        for line in requestHeader:
+        for line in self.getHeaderStrings(self.ntripRequestHeader):
             logging.debug(f"TCP request: {line}")
         logging.info(f"{self.ntripMountPoint}:Request stream header sent.")
         await self.getNtripResponseHeader()
-        self.ntripResponseStatusOk()
+        if self.ntripResponseStatusOk():
+            for line in self.ntripResponseHeader:
+                logging.debug(f"{self.ntripMountPoint}:TCP response: {line}")
 
     async def getRtcmFrame(self):
         rtcm3FramePreample = Bits(bin="0b11010011")
