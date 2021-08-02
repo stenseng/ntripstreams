@@ -129,7 +129,5 @@ setup(
         "Topic :: Internet",
     ],
     # $ setup.py publish support.
-    cmdclass={
-        "upload": UploadCommand,
-    },
+    cmdclass={"upload": UploadCommand,},
 )
