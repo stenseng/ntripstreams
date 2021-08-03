@@ -48,6 +48,10 @@ class NtripStream:
             self.ntripReader, self.ntripWriter = await asyncio.open_connection(
                 self.casterUrl.hostname, self.casterUrl.port
             )
+        logging.info(
+            f"{self.ntripMountPoint}: Connection to {casterUrl} open. "
+            "Ready to write."
+        )
 
     def setRequestSourceTableHeader(self, casterUrl: str):
         self.casterUrl = urlsplit(casterUrl)
@@ -162,7 +166,7 @@ class NtripStream:
             line.lower() for line in self.ntripResponseHeader
         ]:
             self.ntripStreamChunked = True
-            logging.info(f"{self.ntripMountPoint}:Stream is chunked")
+            logging.info(f"{self.ntripMountPoint}: Stream is chunked")
         statusResponse = self.ntripResponseHeader[0].split(" ")
         if len(statusResponse) > 1:
             self.ntripResponseStatusCode = statusResponse[1]
@@ -176,39 +180,33 @@ class NtripStream:
             return True
         else:
             logging.error(
-                f"{self.ntripMountPoint}:Response error "
+                f"{self.ntripMountPoint}: Response error "
                 f"{self.ntripResponseStatusCode}!"
             )
             for line in self.ntripResponseHeader:
-                logging.error(f"{self.ntripMountPoint}:TCP response: {line}")
+                logging.error(f"{self.ntripMountPoint}: TCP response: {line}")
             raise ConnectionRefusedError(
-                f"{self.ntripMountPoint}:" f"{self.ntripResponseHeader[0]}"
+                f"{self.ntripMountPoint}: {self.ntripResponseHeader[0]}"
             ) from None
             self.ntripWriter.close()
             return False
 
-    async def requestSourcetable(self, casterUrl: str):
-        await self.openNtripConnection(casterUrl)
-        logging.info(f"Connection to {casterUrl} open. Ready to write.")
-        self.setRequestSourceTableHeader(self.casterUrl.geturl())
+    async def sendRequestHeader(self):
         self.ntripWriter.write(self.ntripRequestHeader)
         await self.ntripWriter.drain()
-        logging.info("Sourcetable request sent.")
         for line in self.getHeaderStrings(self.ntripRequestHeader):
             logging.debug(f"TCP request: {line}")
-        ntripSourcetable = []
+        logging.info(f"{self.ntripMountPoint}: Request sent.")
         await self.getNtripResponseHeader()
-        if self.ntripResponseStatusCode != "200":
-            logging.error(f"Response error {self.ntripResponseStatusCode}!")
-            for line in self.ntripResponseHeader:
-                logging.error(f"TCP response: {line}")
-            self.ntripWriter.close()
-            raise ConnectionRefusedError(
-                f"{self.casterUrl.geturl()}:" f"{self.ntripResponseHeader[0]}"
-            ) from None
-        else:
+        if self.ntripResponseStatusOk():
             for line in self.ntripResponseHeader:
                 logging.debug(f"TCP response: {line}")
+
+    async def requestSourcetable(self, casterUrl: str):
+        await self.openNtripConnection(casterUrl)
+        self.setRequestSourceTableHeader(casterUrl)
+        await self.sendRequestHeader()
+        ntripSourcetable = []
         while True:
             line = await self.ntripReader.readline()
             if not line:
@@ -232,47 +230,26 @@ class NtripStream:
         ntripVersion: int = 2,
     ):
         self.ntripVersion = ntripVersion
-        await self.openNtripConnection(casterUrl)
         self.ntripMountPoint = mountPoint
-        logging.info(
-            f"{self.ntripMountPoint}:Connection to {casterUrl} open. " "Ready to write."
-        )
+        await self.openNtripConnection(casterUrl)
         self.setRequestServerHeader(
             self.casterUrl.geturl(), self.ntripMountPoint, user, passwd
         )
-        self.ntripWriter.write(self.ntripRequestHeader)
-        await self.ntripWriter.drain()
-        for line in self.getHeaderStrings(self.ntripRequestHeader):
-            logging.debug(f"TCP request: {line}")
-        logging.info(f"{self.ntripMountPoint}:Request server header sent.")
-        await self.getNtripResponseHeader()
-        logging.debug(self.ntripResponseHeader)
-        self.ntripResponseStatusOk()
-
-    async def sendRtcmFrame(self, rtcmFrame):
-        self.ntripWriter.write(rtcmFrame)
-        await self.ntripWriter.drain()
+        await self.sendRequestHeader()
 
     async def requestNtripStream(
         self, casterUrl: str, mountPoint: str, user: str = None, passwd: str = None
     ):
-        await self.openNtripConnection(casterUrl)
         self.ntripMountPoint = mountPoint
-        logging.info(
-            f"{self.ntripMountPoint}:Connection to {casterUrl} open. " "Ready to write."
-        )
+        await self.openNtripConnection(casterUrl)
         self.setRequestStreamHeader(
             self.casterUrl.geturl(), self.ntripMountPoint, user, passwd
         )
-        self.ntripWriter.write(self.ntripRequestHeader)
+        await self.sendRequestHeader()
+
+    async def sendRtcmFrame(self, rtcmFrame):
+        self.ntripWriter.write(rtcmFrame)
         await self.ntripWriter.drain()
-        for line in self.getHeaderStrings(self.ntripRequestHeader):
-            logging.debug(f"TCP request: {line}")
-        logging.info(f"{self.ntripMountPoint}:Request stream header sent.")
-        await self.getNtripResponseHeader()
-        if self.ntripResponseStatusOk():
-            for line in self.ntripResponseHeader:
-                logging.debug(f"{self.ntripMountPoint}:TCP response: {line}")
 
     async def getRtcmFrame(self):
         rtcm3FramePreample = Bits(bin="0b11010011")
