@@ -37,7 +37,7 @@ class NtripStream:
 
     async def openNtripConnection(self, casterUrl: str):
         """
-        Connects to a caste with url http[s]://caster.hostename.net:port
+        Connects to a caster with url http[s]://caster.hostname.net:port
         """
         self.casterUrl = urlsplit(casterUrl)
         if self.casterUrl.scheme == "https":
