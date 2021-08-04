@@ -97,7 +97,7 @@ async def rtcmStreamTasks(url, mountPoints, user, passwd):
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "url", help="Ntripcaster url and port. (e.g. http[s]://caster.hostename.net:2101)"
+    "url", help="Ntripcaster url and port. (e.g. http[s]://caster.hostname.net:2101)"
 )
 parser.add_argument(
     "-m",
