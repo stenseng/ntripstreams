@@ -33,13 +33,14 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None, fail=0, retry=
     rtcmMessage = Rtcm3()
     try:
         await ntripstream.requestNtripStream(url, mountPoint, user, passwd)
-    except ConnectionRefusedError:
+    except OSError as error:
+        logging.error(error)
         return
     while True:
         try:
             rtcmFrame, timeStamp = await ntripstream.getRtcmFrame()
             fail = 0
-        except IOError:
+        except (ConnectionError, IOError):
             if fail >= retry:
                 fail += 1
                 sleepTime = 5 * fail
@@ -57,8 +58,12 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None, fail=0, retry=
                 await asyncio.sleep(2)
                 await procRtcmStream(url, mountPoint, user, passwd, fail)
         else:
-            messageType, data = rtcmMessage.decodeRtcmFrame(rtcmFrame)
-            description = rtcmMessage.messageDescription(messageType)
+            try:
+                messageType, data = rtcmMessage.decodeRtcmFrame(rtcmFrame)
+                description = rtcmMessage.messageDescription(messageType)
+            except Exception:
+                logging.info("Failed to decode RTCM frame.")
+                break
             logging.debug(
                 f"{mountPoint}:RTCM message #:{messageType}" f' "{description}".'
             )
@@ -78,8 +83,9 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None, fail=0, retry=
                     signals = rtcmMessage.msmSignalTypes(messageType, data[0][10])
                     numSignals = len(data[2])
                 logging.info(
-                    f"{mountPoint}:RTCM message #:{messageType} "
-                    f"Sats: {len(data[1])}"
+                    f"{mountPoint}:RTCM message #:{messageType}"
+                    f" Constellation: {rtcmMessage.msmConstellation(messageType)}"
+                    f" Sats: {len(data[1])}"
                     f" Signals: {numSignals}"
                     f" Signal Types: {signals}"
                 )
@@ -134,9 +140,12 @@ else:
     logging.basicConfig(level=logLevel, format="%(asctime)s;%(levelname)s;%(message)s")
 ntripstream = NtripStream()
 if not args.mountpoint:
-    sourceTable = asyncio.run(ntripstream.requestSourcetable(args.url))
-    for source in sourceTable:
-        print(source)
+    try:
+        sourceTable = asyncio.run(ntripstream.requestSourcetable(args.url))
+        for source in sourceTable:
+            print(source)
+    except OSError as error:
+        logging.error(error)
 else:
     if args.server:
         if args.ntrip1 and args.passwd:

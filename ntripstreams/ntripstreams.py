@@ -40,18 +40,30 @@ class NtripStream:
         Connects to a caster with url http[s]://caster.hostname.net:port
         """
         self.casterUrl = urlsplit(casterUrl)
-        if self.casterUrl.scheme == "https":
-            self.ntripReader, self.ntripWriter = await asyncio.open_connection(
-                self.casterUrl.hostname, self.casterUrl.port, ssl=True
-            )
-        else:
-            self.ntripReader, self.ntripWriter = await asyncio.open_connection(
-                self.casterUrl.hostname, self.casterUrl.port
-            )
+        try:
+            if self.casterUrl.scheme == "https":
+                self.ntripReader, self.ntripWriter = await asyncio.open_connection(
+                    self.casterUrl.hostname, self.casterUrl.port, ssl=True
+                )
+            else:
+                self.ntripReader, self.ntripWriter = await asyncio.open_connection(
+                    self.casterUrl.hostname, self.casterUrl.port
+                )
+        except OSError as error:
+            raise OSError(f"Connection to {casterUrl} failed with: {error}") from None
+            logging.error(f"Connection to {casterUrl} failed with: {error}")
+            return False
+        except TimeoutError as error:
+            raise TimeoutError(
+                f"Connection to {casterUrl} timed out: {error}"
+            ) from None
+            logging.error(f"Connection to {casterUrl} timed out: {error}")
+            return False
         logging.info(
             f"{self.ntripMountPoint}: Connection to {casterUrl} open. "
             "Ready to write."
         )
+        return True
 
     def setRequestSourceTableHeader(self, casterUrl: str):
         self.casterUrl = urlsplit(casterUrl)
@@ -154,7 +166,13 @@ class NtripStream:
         ntripResponseHeaderTimestamp = []
         rawHeader = []
         while True:
-            line = await self.ntripReader.readline()
+            try:
+                line = await self.ntripReader.readline()
+            except (asyncio.IncompleteReadError, asyncio.LimitOverrunError) as error:
+                raise ConnectionError(
+                    f"Connection to {self.casterUrl} failed with: {error}"
+                ) from None
+                logging.error(f"Connection to {self.casterUrl} failed with: {error}")
             ntripResponseHeaderTimestamp.append(time())
             if not line:
                 break
@@ -185,9 +203,9 @@ class NtripStream:
             )
             for line in self.ntripResponseHeader:
                 logging.error(f"{self.ntripMountPoint}: TCP response: {line}")
-            raise ConnectionRefusedError(
+            raise ConnectionError(
                 f"{self.ntripMountPoint}: {self.ntripResponseHeader[0]}"
-            ) from None
+            )
             self.ntripWriter.close()
             return False
 
@@ -208,7 +226,14 @@ class NtripStream:
         await self.sendRequestHeader()
         ntripSourcetable = []
         while True:
-            line = await self.ntripReader.readline()
+            try:
+                line = await self.ntripReader.readline()
+            except (asyncio.IncompleteReadError, asyncio.LimitOverrunError) as error:
+                raise ConnectionError(
+                    f"Connection to {self.casterUrl} failed with: {error}"
+                ) from None
+                logging.error(f"Connection to {self.casterUrl} failed with: {error}")
+                return []
             if not line:
                 break
             line = line.decode("ISO-8859-1").rstrip()
@@ -257,15 +282,28 @@ class NtripStream:
         rtcmFrameComplete = False
         while not rtcmFrameComplete:
             if self.ntripStreamChunked:
-                rawLine = await self.ntripReader.readuntil(b"\r\n")
-                length = int(rawLine[:-2].decode("ISO-8859-1"), 16)
-                rawLine = await self.ntripReader.readexactly(length + 2)
+                try:
+                    rawLine = await self.ntripReader.readuntil(b"\r\n")
+                    length = int(rawLine[:-2].decode("ISO-8859-1"), 16)
+                    rawLine = await self.ntripReader.readexactly(length + 2)
+                except (
+                    asyncio.IncompleteReadError,
+                    asyncio.LimitOverrunError,
+                ) as error:
+                    raise ConnectionError(
+                        f"Connection to {self.casterUrl} failed with: {error}"
+                        "during data reception."
+                    ) from None
+                    logging.error(
+                        f"Connection to {self.casterUrl} failed with: {error}"
+                        "during data reception."
+                    )
                 if rawLine[-2:] != b"\r\n":
                     logging.error(
                         f"{self.ntripMountPoint}:Chunk malformed. "
                         "Expected \r\n as ending. Closing connection!"
                     )
-                    raise IOError("Chunk malformed ") from None
+                    raise IOError("Chunk malformed ")
                 receivedBytes = BitStream(rawLine[:-2])
                 logging.debug(f"Chunk {receivedBytes.length}:{length * 8}. ")
             else:
@@ -278,7 +316,7 @@ class NtripStream:
                     f"{receivedBytes.length}:{length * 8}. "
                     "Closing connection! "
                 )
-                raise IOError("Chunk incomplete ") from None
+                raise IOError("Chunk incomplete ")
             self.rtcmFrameBuffer += receivedBytes
             if not self.rtcmFrameAligned:
                 rtcmFramePos = self.rtcmFrameBuffer.find(
