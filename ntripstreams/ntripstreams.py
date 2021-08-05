@@ -49,15 +49,15 @@ class NtripStream:
                 self.ntripReader, self.ntripWriter = await asyncio.open_connection(
                     self.casterUrl.hostname, self.casterUrl.port
                 )
-        except OSError as error:
-            raise OSError(f"Connection to {casterUrl} failed with: {error}") from None
-            logging.error(f"Connection to {casterUrl} failed with: {error}")
-            return False
         except TimeoutError as error:
             raise TimeoutError(
                 f"Connection to {casterUrl} timed out: {error}"
             ) from None
             logging.error(f"Connection to {casterUrl} timed out: {error}")
+            return False
+        except OSError as error:
+            raise OSError(f"Connection to {casterUrl} failed with: {error}") from None
+            logging.error(f"Connection to {casterUrl} failed with: {error}")
             return False
         logging.info(
             f"{self.ntripMountPoint}: Connection to {casterUrl} open. "
