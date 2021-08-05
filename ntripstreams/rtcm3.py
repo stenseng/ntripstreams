@@ -291,6 +291,16 @@ class Rtcm3:
         1128: "Reserved MSM",
         1129: "Reserved MSM",
         1130: "Reserved MSM",
+        1131: "IRNSS MSM1 (Experimental, not implemented)",
+        1132: "IRNSS MSM2 (Experimental, not implemented)",
+        1133: "IRNSS MSM3 (Experimental, not implemented)",
+        1134: "IRNSS MSM4 (Experimental, not implemented)",
+        1135: "IRNSS MSM5 (Experimental, not implemented)",
+        1136: "IRNSS MSM6 (Experimental, not implemented)",
+        1137: "IRNSS MSM7 (Experimental, not implemented)",
+        1138: "Reserved MSM (Experimental)",
+        1139: "Reserved MSM (Experimental)",
+        1140: "Reserved MSM (Experimental)",
         1230: "GLONASS L1 and L2 Code-Phase Biases"
         # 4001-4095: "Proprietary Messages"
     }
