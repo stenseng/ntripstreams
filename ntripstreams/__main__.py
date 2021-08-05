@@ -58,7 +58,7 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None, fail=0, retry=
                 await procRtcmStream(url, mountPoint, user, passwd, fail)
         else:
             messageType, data = rtcmMessage.decodeRtcmFrame(rtcmFrame)
-            description = rtcmMessage.messageDescription[messageType]
+            description = rtcmMessage.messageDescription(messageType)
             logging.debug(
                 f"{mountPoint}:RTCM message #:{messageType}" f' "{description}".'
             )

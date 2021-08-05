@@ -162,10 +162,18 @@ class Rtcm3:
 
         elif messageType == 1029:
             head = message.readlist(self.__msg1029)
+        else:
+            head = "Message type not implemented"
         data = [head, satData, signalData]
         return messageType, data
 
-    messageDescription = {
+    def messageDescription(self, messageType: int):
+        if messageType in self.messageDescriptionText:
+            return self.messageDescriptionText[messageType]
+        else:
+            return f"Message type {messageType} currently not implemented"
+
+    messageDescriptionText = {
         1001: "L1-Only GPS RTK Observables",
         1002: "Extended L1-Only GPS RTK Observables",
         1003: "L1 & L2 GPS RTK Observables",
