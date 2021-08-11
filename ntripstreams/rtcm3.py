@@ -375,7 +375,7 @@ class Rtcm3:
         "uint:2=extClockIndicator, bool=divFreeSmootFlag, bin:3=smoothInterval, "
         "bin:64=gnssSatMask, bin:32=gnssSignalMask"
     )
-    __msgMsmHeadGlonassEpoch = ("pad:24, uint:3=dayOfWeek, uint:27=gnssEpochTime")
+    __msgMsmHeadGlonassEpoch = "pad:24, uint:3=dayOfWeek, uint:27=gnssEpochTime"
     __msgMsm123Sat = ["uint:10=roughRangeMod1ms"]
     __msgMsm46Sat = ["uint:8=numIntMsRoughRange", "uint:10=roughRangeMod1ms"]
     __msgMsm57Sat = [
