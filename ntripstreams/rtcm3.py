@@ -68,6 +68,10 @@ class Rtcm3:
         cellMask = message.read(f"bin:{numSats * numSignals}")
         head.append(cellMask)
         numCells = Bits(bin=head[11]).bin.count("1")
+        if head[0] >= 1081 and head[0] <= 1087:
+            glonassEpoch = message.unpack(self.__msgMsmHeadGlonassEpoch)
+            head[2] = glonassEpoch[1]
+            head.append(glonassEpoch[0])
         return head, numSats, numSignals, numCells
 
     def decodeRtcmMessage(self, message):
@@ -371,6 +375,7 @@ class Rtcm3:
         "uint:2=extClockIndicator, bool=divFreeSmootFlag, bin:3=smoothInterval, "
         "bin:64=gnssSatMask, bin:32=gnssSignalMask"
     )
+    __msgMsmHeadGlonassEpoch = ("pad:24, uint:3=dayOfWeek, uint:27=gnssEpochTime")
     __msgMsm123Sat = ["uint:10=roughRangeMod1ms"]
     __msgMsm46Sat = ["uint:8=numIntMsRoughRange", "uint:10=roughRangeMod1ms"]
     __msgMsm57Sat = [

@@ -85,6 +85,7 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None, fail=0, retry=
                 logging.info(
                     f"{mountPoint}:RTCM message #:{messageType}"
                     f" Constellation: {rtcmMessage.msmConstellation(messageType)}"
+                    f" GNSS: {data[0][2]}"
                     f" Sats: {len(data[1])}"
                     f" Signals: {numSignals}"
                     f" Signal Types: {signals}"
