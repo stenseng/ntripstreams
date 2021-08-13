@@ -1,4 +1,4 @@
-name: Dokumentation
+name: Documentation
 
 on: [push]
 
@@ -15,28 +15,22 @@ jobs:
       with:
         python-version: 3.7
     - name: Add conda to system path
-      # $CONDA is an environment variable pointing to the root of the miniconda directory
       run: |
         echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install dependencies
+    - name: Install dependencies using conda
       run: |
         conda config --set always_yes yes --set changeps1 no
         conda update -q conda
-        # Useful for debugging any issues with conda
         conda info -a
-        #
         conda env create --file dev_environment.yml
         source activate ntrip
         hash -r
-        #
-        # Install ntripstreams
-        pip install -e .
-        # Build docs
+    - name: Install ntripstreams
+        - run: pip install -e .
+    -name: Build docs
+      - run: |
         sphinx-build -b html ./docs ./docs/_build
-        # GitHub pages ignores folder starting with _, can be avoid by
-        # adding a .nojekyll file
         touch ./docs/_build/.nojekyll
-        #
     - name: Deploy docs
       uses: peaceiris/actions-gh-pages@v3
       if: github.ref == 'refs/heads/main'
