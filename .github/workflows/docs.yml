@@ -27,7 +27,7 @@ jobs:
         hash -r
     - name: Install ntripstreams
       run: pip install -e .
-    -name: Build docs
+    - name: Build docs
       run: |
         sphinx-build -b html ./docs ./docs/_build
         touch ./docs/_build/.nojekyll
