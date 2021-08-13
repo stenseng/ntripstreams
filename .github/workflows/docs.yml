@@ -15,7 +15,7 @@ jobs:
       with:
         python-version: 3.9
     - name: Add conda to the path
-        run: echo "$CONDA/bin" >> $GITHUB_PATH
+        run: echo $CONDA/bin >> $GITHUB_PATH
     - name: Setup environment and build docs
       run: |
         sed -i '/spyder/d' dev-environment.yml
@@ -25,6 +25,8 @@ jobs:
         conda env create --file dev_environment.yml
         conda activate ntrip
         hash -r
+    - name: Generate docs
+      run: |
         pip install -e .
         sphinx-build -b html ./docs ./docs/_build
         touch ./docs/_build/.nojekyll
