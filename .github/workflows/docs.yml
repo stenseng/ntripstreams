@@ -18,7 +18,7 @@ jobs:
       run: echo $CONDA/bin >> $GITHUB_PATH
     - name: Setup environment and build docs
       run: |
-        sed -i '/spyder/d' dev-environment.yml
+        sed -i '/spyder/d' dev_environment.yml
         conda config --set always_yes yes --set changeps1 no
         conda update -q conda
         conda info -a
