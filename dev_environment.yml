@@ -4,13 +4,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.9
-  - bitstring=3.1
   - spyder=5.0
-  - sphinx=4.0
-  - sphinx-click=3.0
-  - pip
-  - pip:
-    - sphinxcontrib.programoutput
-    - sphinx-rtd-theme
+  - bitstring=3.1
 variables:
   QT_MAC_WANTS_LAYER: 1

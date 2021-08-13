@@ -5,6 +5,7 @@ ntripstreams
     :maxdepth: 2
     :caption: Contents:
 
+    install
     ntripstreams
 
 Indices and tables

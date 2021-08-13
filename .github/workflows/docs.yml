@@ -5,38 +5,29 @@ on: [push]
 jobs:
   build-linux:
     runs-on: ubuntu-latest
-    # strategy:
-      # max-parallel: 2
-
     steps:
     - uses: actions/checkout@v2
+
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
-#    - name: Add conda to the path
-#      run: echo "${CONDA}"/bin >> $GITHUB_PATH
-#    - name: Setup environment build docs
-#      run: |
-#        sed -i '/spyder/d' dev_environment.yml
-#        conda config --set always_yes yes --set changeps1 no
-#        conda update -q conda
-#        conda info -a
-#        conda env create --file dev_environment.yml
-#        source activate ntrip
-#        hash -r
+
     - name: Setup environment
       run: pip install \
         sphinx \
         sphinx-click \
         sphinxcontrib.programoutput \
         sphinx-rtd-theme
+
     - name: Install project
       run: pip install -e .
+
     - name: Generate docs
       run: |
         sphinx-build -b html ./docs ./docs/_build
         touch ./docs/_build/.nojekyll
+
     - name: Deploy docs
       uses: peaceiris/actions-gh-pages@v3
       if: github.ref == 'refs/heads/main'
