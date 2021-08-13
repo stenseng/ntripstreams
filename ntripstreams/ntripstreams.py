@@ -9,6 +9,7 @@ import asyncio
 import logging
 from base64 import b64encode
 from time import gmtime, strftime, time
+from typing import Union
 from urllib.parse import urlsplit
 
 from bitstring import Bits, BitStream
@@ -35,9 +36,27 @@ class NtripStream:
         self.rtcmFramePreample = False
         self.rtcmFrameAligned = False
 
-    async def openNtripConnection(self, casterUrl: str):
+    async def openNtripConnection(self, casterUrl: str) -> bool:
         """
-        Connects to a caster with url http[s]://caster.hostname.net:port
+        Connects to a caster.
+
+        Parameters
+        ----------
+        casterUrl : str
+            http[s]://caster.hostname.net:port.
+
+        Raises
+        ------
+        TimeoutError
+            DESCRIPTION.
+        OSError
+            DESCRIPTION.
+
+        Returns
+        -------
+        bool
+            DESCRIPTION.
+
         """
         self.casterUrl = urlsplit(casterUrl)
         try:
@@ -65,7 +84,21 @@ class NtripStream:
         )
         return True
 
-    def setRequestSourceTableHeader(self, casterUrl: str):
+    def setRequestSourceTableHeader(self, casterUrl: str) -> None:
+        """
+
+
+        Parameters
+        ----------
+        casterUrl : str
+            DESCRIPTION.
+
+        Returns
+        -------
+        None
+            DESCRIPTION.
+
+        """
         self.casterUrl = urlsplit(casterUrl)
         timestamp = strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
         self.ntripRequestHeader = (
@@ -86,7 +119,31 @@ class NtripStream:
         ntripUser: str = None,
         ntripPassword: str = None,
         nmeaString: str = None,
-    ):
+    ) -> None:
+        """
+
+
+        Parameters
+        ----------
+        casterUrl : str
+            DESCRIPTION.
+        ntripMountPoint : str
+            DESCRIPTION.
+        ntripUser : str, optional
+            DESCRIPTION. The default is None.
+        ntripPassword : str, optional
+            DESCRIPTION. The default is None.
+        nmeaString : str, optional
+            DESCRIPTION. The default is None.
+         : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None
+            DESCRIPTION.
+
+        """
         self.casterUrl = urlsplit(casterUrl)
         self.ntripMountPoint = ntripMountPoint
         timestamp = strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
@@ -117,7 +174,31 @@ class NtripStream:
         ntripUser: str = None,
         ntripPassword: str = None,
         ntripVersion: int = 2,
-    ):
+    ) -> None:
+        """
+
+
+        Parameters
+        ----------
+        casterUrl : str
+            DESCRIPTION.
+        ntripMountPoint : str
+            DESCRIPTION.
+        ntripUser : str, optional
+            DESCRIPTION. The default is None.
+        ntripPassword : str, optional
+            DESCRIPTION. The default is None.
+        ntripVersion : int, optional
+            DESCRIPTION. The default is 2.
+         : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None
+            DESCRIPTION.
+
+        """
         self.casterUrl = urlsplit(casterUrl)
         if ntripVersion == 1:
             self.ntripVersion = 1
@@ -152,7 +233,21 @@ class NtripStream:
                 "\r\n"
             ).encode("ISO-8859-1")
 
-    def getHeaderStrings(self, rawHeader):
+    def getHeaderStrings(self, rawHeader: Union[bytes, list]) -> str:
+        """
+
+
+        Parameters
+        ----------
+        rawHeader : [bytes, list]
+            DESCRIPTION.
+
+        Returns
+        -------
+        str
+            DESCRIPTION.
+
+        """
         if isinstance(rawHeader, bytes):
             headerStrings = rawHeader.decode("ISO-8859-1").split("\r\n")
         if isinstance(rawHeader, list):
@@ -161,7 +256,21 @@ class NtripStream:
                 headerStrings.append(rawLine.decode("ISO-8859-1").rstrip())
         return headerStrings
 
-    async def getNtripResponseHeader(self):
+    async def getNtripResponseHeader(self) -> None:
+        """
+
+
+        Raises
+        ------
+        ConnectionError
+            DESCRIPTION.
+
+        Returns
+        -------
+        None
+            DESCRIPTION.
+
+        """
         self.ntripResponseHeader = []
         ntripResponseHeaderTimestamp = []
         rawHeader = []
@@ -191,7 +300,21 @@ class NtripStream:
         else:
             self.ntripResponseStatusCode = 0
 
-    def ntripResponseStatusOk(self):
+    def ntripResponseStatusOk(self) -> bool:
+        """
+
+
+        Raises
+        ------
+        ConnectionError
+            DESCRIPTION.
+
+        Returns
+        -------
+        bool
+            DESCRIPTION.
+
+        """
         if self.ntripResponseStatusCode == "200":
             self.rtcmFramePreample = False
             self.rtcmFrameAligned = False
@@ -209,7 +332,16 @@ class NtripStream:
             self.ntripWriter.close()
             return False
 
-    async def sendRequestHeader(self):
+    async def sendRequestHeader(self) -> None:
+        """
+
+
+        Returns
+        -------
+        None
+            DESCRIPTION.
+
+        """
         self.ntripWriter.write(self.ntripRequestHeader)
         await self.ntripWriter.drain()
         for line in self.getHeaderStrings(self.ntripRequestHeader):
@@ -220,7 +352,26 @@ class NtripStream:
             for line in self.ntripResponseHeader:
                 logging.debug(f"TCP response: {line}")
 
-    async def requestSourcetable(self, casterUrl: str):
+    async def requestSourcetable(self, casterUrl: str) -> list:
+        """
+
+
+        Parameters
+        ----------
+        casterUrl : str
+            DESCRIPTION.
+
+        Raises
+        ------
+        ConnectionError
+            DESCRIPTION.
+
+        Returns
+        -------
+        list
+            DESCRIPTION.
+
+        """
         await self.openNtripConnection(casterUrl)
         self.setRequestSourceTableHeader(casterUrl)
         await self.sendRequestHeader()
@@ -253,7 +404,31 @@ class NtripStream:
         user: str = None,
         passwd: str = None,
         ntripVersion: int = 2,
-    ):
+    ) -> None:
+        """
+
+
+        Parameters
+        ----------
+        casterUrl : str
+            DESCRIPTION.
+        mountPoint : str
+            DESCRIPTION.
+        user : str, optional
+            DESCRIPTION. The default is None.
+        passwd : str, optional
+            DESCRIPTION. The default is None.
+        ntripVersion : int, optional
+            DESCRIPTION. The default is 2.
+         : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None
+            DESCRIPTION.
+
+        """
         self.ntripVersion = ntripVersion
         self.ntripMountPoint = mountPoint
         await self.openNtripConnection(casterUrl)
@@ -264,7 +439,27 @@ class NtripStream:
 
     async def requestNtripStream(
         self, casterUrl: str, mountPoint: str, user: str = None, passwd: str = None
-    ):
+    ) -> None:
+        """
+
+
+        Parameters
+        ----------
+        casterUrl : str
+            DESCRIPTION.
+        mountPoint : str
+            DESCRIPTION.
+        user : str, optional
+            DESCRIPTION. The default is None.
+        passwd : str, optional
+            DESCRIPTION. The default is None.
+
+        Returns
+        -------
+        None
+            DESCRIPTION.
+
+        """
         self.ntripMountPoint = mountPoint
         await self.openNtripConnection(casterUrl)
         self.setRequestStreamHeader(
@@ -272,7 +467,7 @@ class NtripStream:
         )
         await self.sendRequestHeader()
 
-    async def sendRtcmFrame(self, rtcmFrame):
+    async def sendRtcmFrame(self, rtcmFrame: BitStream) -> None:
         self.ntripWriter.write(rtcmFrame)
         await self.ntripWriter.drain()
 
