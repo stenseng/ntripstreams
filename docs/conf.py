@@ -15,10 +15,9 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(".."))
-
 import ntripstreams
 
+sys.path.insert(0, os.path.abspath(".."))
 
 # -- Project information -----------------------------------------------------
 
@@ -56,7 +55,7 @@ templates_path = ["_templates"]
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The master toctree document.
 master_doc = "index"
@@ -153,15 +152,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (
-        master_doc,
-        "ntripstreamsapi",
-        "ntripstreamsapi Documentation",
-        [author],
-        1
-    )
-]
+man_pages = [(master_doc, "ntripstreamsapi", "ntripstreamsapi Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------

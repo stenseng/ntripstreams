@@ -15,8 +15,8 @@ jobs:
       with:
         python-version: 3.7
     - name: Add conda to system path
+      # $CONDA is an environment variable pointing to the root of the miniconda directory
       run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Install dependencies
       run: |
@@ -26,7 +26,7 @@ jobs:
         conda info -a
         #
         conda env create --file dev_environment.yml
-        conda activate ntrip
+        source activate ntrip
         hash -r
         #
         # Install ntripstreams
