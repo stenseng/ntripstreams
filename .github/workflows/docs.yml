@@ -1,0 +1,46 @@
+name: Dokumentation
+
+on: [push]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    # strategy:
+      # max-parallel: 2
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Add conda to system path
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        echo $CONDA/bin >> $GITHUB_PATH
+    - name: Install dependencies
+      run: |
+        conda config --set always_yes yes --set changeps1 no
+        conda update -q conda
+        # Useful for debugging any issues with conda
+        conda info -a
+        #
+        conda env create --file dev_environment.yml
+        conda activate ntrip
+        hash -r
+        #
+        # Install ntripstreams
+        pip install -e .
+        # Build docs
+        sphinx-build -b html ./docs ./docs/_build
+        # GitHub pages ignores folder starting with _, can be avoid by
+        # adding a .nojekyll file
+        touch ./docs/_build/.nojekyll
+        #
+    - name: Deploy docs
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs/_build
+        force_orphan: true
