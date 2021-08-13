@@ -10,25 +10,20 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.7
+    - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
-    - name: Add conda to system path
+        python-version: 3.9
+    - name: Setup environment and build docs
       run: |
-        echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install dependencies using conda
-      run: |
+        echo "$CONDA/bin" >> $GITHUB_PATH
         conda config --set always_yes yes --set changeps1 no
         conda update -q conda
         conda info -a
         conda env create --file dev_environment.yml
         source activate ntrip
         hash -r
-    - name: Install ntripstreams
-      run: pip install -e .
-    - name: Build docs
-      run: |
+        pip install -e .
         sphinx-build -b html ./docs ./docs/_build
         touch ./docs/_build/.nojekyll
     - name: Deploy docs
