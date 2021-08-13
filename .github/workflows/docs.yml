@@ -26,9 +26,9 @@ jobs:
         source activate ntrip
         hash -r
     - name: Install ntripstreams
-        - run: pip install -e .
+      run: pip install -e .
     -name: Build docs
-      - run: |
+      run: |
         sphinx-build -b html ./docs ./docs/_build
         touch ./docs/_build/.nojekyll
     - name: Deploy docs
