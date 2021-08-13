@@ -14,14 +14,16 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
+    - name: Add conda to the path
+        run: echo "$CONDA/bin" >> $GITHUB_PATH
     - name: Setup environment and build docs
       run: |
-        echo "$CONDA/bin" >> $GITHUB_PATH
+        sed -i '/spyder/d' dev-environment.yml
         conda config --set always_yes yes --set changeps1 no
         conda update -q conda
         conda info -a
         conda env create --file dev_environment.yml
-        source activate ntrip
+        conda activate ntrip
         hash -r
         pip install -e .
         sphinx-build -b html ./docs ./docs/_build
