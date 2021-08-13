@@ -15,7 +15,7 @@ jobs:
       with:
         python-version: 3.9
     - name: Add conda to the path
-        run: echo $CONDA/bin >> $GITHUB_PATH
+      run: echo $CONDA/bin >> $GITHUB_PATH
     - name: Setup environment and build docs
       run: |
         sed -i '/spyder/d' dev-environment.yml
