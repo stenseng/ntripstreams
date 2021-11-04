@@ -20,8 +20,8 @@ class Rtcm3:
     def mjd(self, unixTimestamp):
         mjd = int(unixTimestamp / 86400.0 + 40587.0)
         return mjd
-    
-    def __msmConstellation(self, messageType: int):
+
+    def msmConstellation(self, messageType: int):
         constellation = self.__msmConstellations[int(messageType / 10) % 100]
         return constellation
 
@@ -31,14 +31,14 @@ class Rtcm3:
         elif messageType >= 1009 and messageType <= 1012:
             constellation = self.__msmConstellations[8]
         elif messageType >= 1071 and messageType <= 1127:
-            constellation = self.__msmConstellation(messageType)
+            constellation = self.msmConstellation(messageType)
         else:
             constellation = "GNSS"
         return constellation
-    
+
     def msmSignalTypes(self, messageType: int, msmSignals):
         signals = [
-            self.__msmSignalTypes[self.__msmConstellation(messageType)][i]
+            self.__msmSignalTypes[self.msmConstellation(messageType)][i]
             for i, mask in enumerate(msmSignals)
             if mask == "1"
         ]
