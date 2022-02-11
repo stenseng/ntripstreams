@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ntripstreams &mdash; ntripstreams 0.2.1 documentation</title>
+      <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Installation" href="install.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> ntripstreams
+          </a>
+              <div class="version">
+                0.2.1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ntripstreams</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ntripstreams</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>ntripstreams</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/ntripstreams.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-ntripstreams">
+<span id="ntripstreams"></span><h1>ntripstreams<a class="headerlink" href="#module-ntripstreams" title="Permalink to this headline"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ntripstreams.</span></span><span class="sig-name descname"><span class="pre">NtripStream</span></span><a class="headerlink" href="#ntripstreams.NtripStream" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream.getHeaderStrings">
+<span class="sig-name descname"><span class="pre">getHeaderStrings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rawHeader</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">bytes</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#ntripstreams.NtripStream.getHeaderStrings" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>rawHeader</strong> (<em>[</em><em>bytes</em><em>, </em><em>list</em><em>]</em>) – DESCRIPTION.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>DESCRIPTION.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream.getNtripResponseHeader">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">getNtripResponseHeader</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#ntripstreams.NtripStream.getNtripResponseHeader" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>ConnectionError</strong> – DESCRIPTION.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>DESCRIPTION.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream.getRtcmFrame">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">getRtcmFrame</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ntripstreams.NtripStream.getRtcmFrame" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream.ntripResponseStatusOk">
+<span class="sig-name descname"><span class="pre">ntripResponseStatusOk</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ntripstreams.NtripStream.ntripResponseStatusOk" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>ConnectionError</strong> – DESCRIPTION.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>DESCRIPTION.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream.openNtripConnection">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">openNtripConnection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">casterUrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ntripstreams.NtripStream.openNtripConnection" title="Permalink to this definition"></a></dt>
+<dd><p>Connects to a caster.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>casterUrl</strong> (<em>str</em>) – http[s]://caster.hostname.net:port.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TimeoutError</strong> – DESCRIPTION.</p></li>
+<li><p><strong>OSError</strong> – DESCRIPTION.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>DESCRIPTION.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream.requestNtripServer">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">requestNtripServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">casterUrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mountPoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passwd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntripVersion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#ntripstreams.NtripStream.requestNtripServer" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>casterUrl</strong> (<em>str</em>) – DESCRIPTION.</p></li>
+<li><p><strong>mountPoint</strong> (<em>str</em>) – DESCRIPTION.</p></li>
+<li><p><strong>user</strong> (<em>str</em><em>, </em><em>optional</em>) – DESCRIPTION. The default is None.</p></li>
+<li><p><strong>passwd</strong> (<em>str</em><em>, </em><em>optional</em>) – DESCRIPTION. The default is None.</p></li>
+<li><p><strong>ntripVersion</strong> (<em>int</em><em>, </em><em>optional</em>) – <p>DESCRIPTION. The default is 2.
+: TYPE</p>
+<blockquote>
+<div><p>DESCRIPTION.</p>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>DESCRIPTION.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream.requestNtripStream">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">requestNtripStream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">casterUrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mountPoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passwd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#ntripstreams.NtripStream.requestNtripStream" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>casterUrl</strong> (<em>str</em>) – DESCRIPTION.</p></li>
+<li><p><strong>mountPoint</strong> (<em>str</em>) – DESCRIPTION.</p></li>
+<li><p><strong>user</strong> (<em>str</em><em>, </em><em>optional</em>) – DESCRIPTION. The default is None.</p></li>
+<li><p><strong>passwd</strong> (<em>str</em><em>, </em><em>optional</em>) – DESCRIPTION. The default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>DESCRIPTION.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream.requestSourcetable">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">requestSourcetable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">casterUrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#ntripstreams.NtripStream.requestSourcetable" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>casterUrl</strong> (<em>str</em>) – DESCRIPTION.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ConnectionError</strong> – DESCRIPTION.</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>DESCRIPTION.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream.sendRequestHeader">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sendRequestHeader</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#ntripstreams.NtripStream.sendRequestHeader" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>DESCRIPTION.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream.sendRtcmFrame">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sendRtcmFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rtcmFrame</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bitstring.BitStream</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#ntripstreams.NtripStream.sendRtcmFrame" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream.setRequestServerHeader">
+<span class="sig-name descname"><span class="pre">setRequestServerHeader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">casterUrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntripMountPoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntripUser</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntripPassword</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntripVersion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#ntripstreams.NtripStream.setRequestServerHeader" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>casterUrl</strong> (<em>str</em>) – DESCRIPTION.</p></li>
+<li><p><strong>ntripMountPoint</strong> (<em>str</em>) – DESCRIPTION.</p></li>
+<li><p><strong>ntripUser</strong> (<em>str</em><em>, </em><em>optional</em>) – DESCRIPTION. The default is None.</p></li>
+<li><p><strong>ntripPassword</strong> (<em>str</em><em>, </em><em>optional</em>) – DESCRIPTION. The default is None.</p></li>
+<li><p><strong>ntripVersion</strong> (<em>int</em><em>, </em><em>optional</em>) – <p>DESCRIPTION. The default is 2.
+: TYPE</p>
+<blockquote>
+<div><p>DESCRIPTION.</p>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>DESCRIPTION.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream.setRequestSourceTableHeader">
+<span class="sig-name descname"><span class="pre">setRequestSourceTableHeader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">casterUrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#ntripstreams.NtripStream.setRequestSourceTableHeader" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>casterUrl</strong> (<em>str</em>) – DESCRIPTION.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>DESCRIPTION.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.NtripStream.setRequestStreamHeader">
+<span class="sig-name descname"><span class="pre">setRequestStreamHeader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">casterUrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntripMountPoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntripUser</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntripPassword</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nmeaString</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#ntripstreams.NtripStream.setRequestStreamHeader" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>casterUrl</strong> (<em>str</em>) – DESCRIPTION.</p></li>
+<li><p><strong>ntripMountPoint</strong> (<em>str</em>) – DESCRIPTION.</p></li>
+<li><p><strong>ntripUser</strong> (<em>str</em><em>, </em><em>optional</em>) – DESCRIPTION. The default is None.</p></li>
+<li><p><strong>ntripPassword</strong> (<em>str</em><em>, </em><em>optional</em>) – DESCRIPTION. The default is None.</p></li>
+<li><p><strong>nmeaString</strong> (<em>str</em><em>, </em><em>optional</em>) – <p>DESCRIPTION. The default is None.
+: TYPE</p>
+<blockquote>
+<div><p>DESCRIPTION.</p>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>DESCRIPTION.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ntripstreams.Rtcm3">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ntripstreams.</span></span><span class="sig-name descname"><span class="pre">Rtcm3</span></span><a class="headerlink" href="#ntripstreams.Rtcm3" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.Rtcm3.constellation">
+<span class="sig-name descname"><span class="pre">constellation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messageType</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntripstreams.Rtcm3.constellation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.Rtcm3.decodeRtcmFrame">
+<span class="sig-name descname"><span class="pre">decodeRtcmFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rtcmFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntripstreams.Rtcm3.decodeRtcmFrame" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.Rtcm3.decodeRtcmMessage">
+<span class="sig-name descname"><span class="pre">decodeRtcmMessage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntripstreams.Rtcm3.decodeRtcmMessage" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.Rtcm3.encodeRtcmFrame">
+<span class="sig-name descname"><span class="pre">encodeRtcmFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messageType</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataDict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntripstreams.Rtcm3.encodeRtcmFrame" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.Rtcm3.encodeRtcmMessage">
+<span class="sig-name descname"><span class="pre">encodeRtcmMessage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messageType</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataDict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntripstreams.Rtcm3.encodeRtcmMessage" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.Rtcm3.messageDescription">
+<span class="sig-name descname"><span class="pre">messageDescription</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messageType</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntripstreams.Rtcm3.messageDescription" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ntripstreams.Rtcm3.messageDescriptionText">
+<span class="sig-name descname"><span class="pre">messageDescriptionText</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{1001:</span> <span class="pre">'L1-Only</span> <span class="pre">GPS</span> <span class="pre">RTK</span> <span class="pre">Observables',</span> <span class="pre">1002:</span> <span class="pre">'Extended</span> <span class="pre">L1-Only</span> <span class="pre">GPS</span> <span class="pre">RTK</span> <span class="pre">Observables',</span> <span class="pre">1003:</span> <span class="pre">'L1</span> <span class="pre">&amp;</span> <span class="pre">L2</span> <span class="pre">GPS</span> <span class="pre">RTK</span> <span class="pre">Observables',</span> <span class="pre">1004:</span> <span class="pre">'Extended</span> <span class="pre">L1</span> <span class="pre">&amp;</span> <span class="pre">L2</span> <span class="pre">GPS</span> <span class="pre">RTK</span> <span class="pre">Observables',</span> <span class="pre">1005:</span> <span class="pre">'Stationary</span> <span class="pre">RTK</span> <span class="pre">Reference</span> <span class="pre">Station</span> <span class="pre">ARP',</span> <span class="pre">1006:</span> <span class="pre">'Stationary</span> <span class="pre">RTK</span> <span class="pre">Reference</span> <span class="pre">Station</span> <span class="pre">ARP</span> <span class="pre">with</span> <span class="pre">Antenna</span> <span class="pre">Height',</span> <span class="pre">1007:</span> <span class="pre">'Antenna</span> <span class="pre">Descriptor',</span> <span class="pre">1008:</span> <span class="pre">'Antenna</span> <span class="pre">Descriptor</span> <span class="pre">&amp;</span> <span class="pre">Serial</span> <span class="pre">Number',</span> <span class="pre">1009:</span> <span class="pre">'L1-Only</span> <span class="pre">GLONASS</span> <span class="pre">RTK</span> <span class="pre">Observables',</span> <span class="pre">1010:</span> <span class="pre">'Extended</span> <span class="pre">L1-Only</span> <span class="pre">GLONASS</span> <span class="pre">RTK</span> <span class="pre">Observables',</span> <span class="pre">1011:</span> <span class="pre">'L1</span> <span class="pre">&amp;</span> <span class="pre">L2</span> <span class="pre">GLONASS</span> <span class="pre">RTK</span> <span class="pre">Observables',</span> <span class="pre">1012:</span> <span class="pre">'Extended</span> <span class="pre">L1</span> <span class="pre">&amp;</span> <span class="pre">L2</span> <span class="pre">GLONASS</span> <span class="pre">RTK</span> <span class="pre">Observables',</span> <span class="pre">1013:</span> <span class="pre">'System</span> <span class="pre">Parameters',</span> <span class="pre">1014:</span> <span class="pre">'Network</span> <span class="pre">Auxiliary</span> <span class="pre">Station</span> <span class="pre">Data',</span> <span class="pre">1015:</span> <span class="pre">'GPS</span> <span class="pre">Ionospheric</span> <span class="pre">Correction</span> <span class="pre">Differences',</span> <span class="pre">1016:</span> <span class="pre">'GPS</span> <span class="pre">Geometric</span> <span class="pre">Correction</span> <span class="pre">Differences',</span> <span class="pre">1017:</span> <span class="pre">'GPS</span> <span class="pre">Combined</span> <span class="pre">Geometric</span> <span class="pre">and</span> <span class="pre">Ionospheric</span> <span class="pre">Correction</span> <span class="pre">Differences',</span> <span class="pre">1018:</span> <span class="pre">'RESERVED</span> <span class="pre">for</span> <span class="pre">Alternative</span> <span class="pre">Ionospheric</span> <span class="pre">Correction</span> <span class="pre">Difference</span> <span class="pre">Message',</span> <span class="pre">1019:</span> <span class="pre">'GPS</span> <span class="pre">Ephemerides',</span> <span class="pre">1020:</span> <span class="pre">'GLONASS</span> <span class="pre">Ephemerides',</span> <span class="pre">1021:</span> <span class="pre">'Helmert</span> <span class="pre">/</span> <span class="pre">Abridged</span> <span class="pre">Molodenski</span> <span class="pre">Transformation</span> <span class="pre">Parameters',</span> <span class="pre">1022:</span> <span class="pre">'Molodenski-Badekas</span> <span class="pre">Transformation</span> <span class="pre">Parameters',</span> <span class="pre">1023:</span> <span class="pre">'Residuals,</span> <span class="pre">Ellipsoidal</span> <span class="pre">Grid</span> <span class="pre">Representation',</span> <span class="pre">1024:</span> <span class="pre">'Residuals,</span> <span class="pre">Plane</span> <span class="pre">Grid</span> <span class="pre">Representation',</span> <span class="pre">1025:</span> <span class="pre">'Projection</span> <span class="pre">Parameters,</span> <span class="pre">Projection</span> <span class="pre">Types</span> <span class="pre">other</span> <span class="pre">than</span> <span class="pre">Lambert</span> <span class="pre">Conic</span> <span class="pre">Conformal</span> <span class="pre">(2</span> <span class="pre">SP)</span> <span class="pre">and</span> <span class="pre">Oblique</span> <span class="pre">Mercator',</span> <span class="pre">1026:</span> <span class="pre">'Projection</span> <span class="pre">Parameters,</span> <span class="pre">Projection</span> <span class="pre">Type</span> <span class="pre">LCC2SP</span> <span class="pre">(Lambert</span> <span class="pre">Conic</span> <span class="pre">Conformal</span> <span class="pre">(2</span> <span class="pre">SP))',</span> <span class="pre">1027:</span> <span class="pre">'Projection</span> <span class="pre">Parameters,</span> <span class="pre">Projection</span> <span class="pre">Type</span> <span class="pre">OM</span> <span class="pre">(Oblique</span> <span class="pre">Mercator)',</span> <span class="pre">1028:</span> <span class="pre">'(Reserved</span> <span class="pre">for</span> <span class="pre">Global</span> <span class="pre">to</span> <span class="pre">Plate-Fixed</span> <span class="pre">Transformation)',</span> <span class="pre">1029:</span> <span class="pre">'Unicode</span> <span class="pre">Text</span> <span class="pre">String',</span> <span class="pre">1030:</span> <span class="pre">'GPS</span> <span class="pre">Network</span> <span class="pre">RTK</span> <span class="pre">Residual</span> <span class="pre">Message',</span> <span class="pre">1031:</span> <span class="pre">'GLONASS</span> <span class="pre">Network</span> <span class="pre">RTK</span> <span class="pre">Residual</span> <span class="pre">Message',</span> <span class="pre">1032:</span> <span class="pre">'Physical</span> <span class="pre">Reference</span> <span class="pre">Station</span> <span class="pre">Position</span> <span class="pre">Message',</span> <span class="pre">1033:</span> <span class="pre">'Receiver</span> <span class="pre">and</span> <span class="pre">Antenna</span> <span class="pre">Descriptors',</span> <span class="pre">1034:</span> <span class="pre">'GPS</span> <span class="pre">Network</span> <span class="pre">FKP</span> <span class="pre">Gradient',</span> <span class="pre">1035:</span> <span class="pre">'GLONASS</span> <span class="pre">Network</span> <span class="pre">FKP</span> <span class="pre">Gradient',</span> <span class="pre">1037:</span> <span class="pre">'GLONASS</span> <span class="pre">Ionospheric</span> <span class="pre">Correction</span> <span class="pre">Differences',</span> <span class="pre">1038:</span> <span class="pre">'GLONASS</span> <span class="pre">Geometric</span> <span class="pre">Correction</span> <span class="pre">Differences',</span> <span class="pre">1039:</span> <span class="pre">'GLONASS</span> <span class="pre">Combined</span> <span class="pre">Geometric</span> <span class="pre">and</span> <span class="pre">Ionospheric</span> <span class="pre">Correction</span> <span class="pre">Differences',</span> <span class="pre">1042:</span> <span class="pre">'BDS</span> <span class="pre">Satellite</span> <span class="pre">Ephemeris</span> <span class="pre">Data',</span> <span class="pre">1044:</span> <span class="pre">'QZSS</span> <span class="pre">Ephemerides',</span> <span class="pre">1045:</span> <span class="pre">'Galileo</span> <span class="pre">F/NAV</span> <span class="pre">Satellite</span> <span class="pre">Ephemeris</span> <span class="pre">Data',</span> <span class="pre">1046:</span> <span class="pre">'Galileo</span> <span class="pre">I/NAV</span> <span class="pre">Satellite</span> <span class="pre">Ephemeris</span> <span class="pre">Data',</span> <span class="pre">1057:</span> <span class="pre">'SSR</span> <span class="pre">GPS</span> <span class="pre">Orbit</span> <span class="pre">Correction',</span> <span class="pre">1058:</span> <span class="pre">'SSR</span> <span class="pre">GPS</span> <span class="pre">Clock</span> <span class="pre">Correction',</span> <span class="pre">1059:</span> <span class="pre">'SSR</span> <span class="pre">GPS</span> <span class="pre">Code</span> <span class="pre">Bias',</span> <span class="pre">1060:</span> <span class="pre">'SSR</span> <span class="pre">GPS</span> <span class="pre">Combined</span> <span class="pre">Orbit</span> <span class="pre">and</span> <span class="pre">Clock</span> <span class="pre">Corrections',</span> <span class="pre">1061:</span> <span class="pre">'SSR</span> <span class="pre">GPS</span> <span class="pre">URA',</span> <span class="pre">1062:</span> <span class="pre">'SSR</span> <span class="pre">GPS</span> <span class="pre">High</span> <span class="pre">Rate</span> <span class="pre">Clock</span> <span class="pre">Correction',</span> <span class="pre">1063:</span> <span class="pre">'SSR</span> <span class="pre">GLONASS</span> <span class="pre">Orbit</span> <span class="pre">Correction',</span> <span class="pre">1064:</span> <span class="pre">'SSR</span> <span class="pre">GLONASS</span> <span class="pre">Clock</span> <span class="pre">Correction',</span> <span class="pre">1065:</span> <span class="pre">'SSR</span> <span class="pre">GLONASS</span> <span class="pre">Code</span> <span class="pre">Bias',</span> <span class="pre">1066:</span> <span class="pre">'SSR</span> <span class="pre">GLONASS</span> <span class="pre">Combined</span> <span class="pre">Orbit</span> <span class="pre">and</span> <span class="pre">Clock</span> <span class="pre">Corrections',</span> <span class="pre">1067:</span> <span class="pre">'SSR</span> <span class="pre">GLONASS</span> <span class="pre">URA',</span> <span class="pre">1068:</span> <span class="pre">'SSR</span> <span class="pre">GLONASS</span> <span class="pre">High</span> <span class="pre">Rate</span> <span class="pre">Clock</span> <span class="pre">Correction',</span> <span class="pre">1070:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1071:</span> <span class="pre">'GPS</span> <span class="pre">MSM1',</span> <span class="pre">1072:</span> <span class="pre">'GPS</span> <span class="pre">MSM2',</span> <span class="pre">1073:</span> <span class="pre">'GPS</span> <span class="pre">MSM3',</span> <span class="pre">1074:</span> <span class="pre">'GPS</span> <span class="pre">MSM4',</span> <span class="pre">1075:</span> <span class="pre">'GPS</span> <span class="pre">MSM5',</span> <span class="pre">1076:</span> <span class="pre">'GPS</span> <span class="pre">MSM6',</span> <span class="pre">1077:</span> <span class="pre">'GPS</span> <span class="pre">MSM7',</span> <span class="pre">1078:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1079:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1080:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1081:</span> <span class="pre">'GLONASS</span> <span class="pre">MSM1',</span> <span class="pre">1082:</span> <span class="pre">'GLONASS</span> <span class="pre">MSM2',</span> <span class="pre">1083:</span> <span class="pre">'GLONASS</span> <span class="pre">MSM3',</span> <span class="pre">1084:</span> <span class="pre">'GLONASS</span> <span class="pre">MSM4',</span> <span class="pre">1085:</span> <span class="pre">'GLONASS</span> <span class="pre">MSM5',</span> <span class="pre">1086:</span> <span class="pre">'GLONASS</span> <span class="pre">MSM6',</span> <span class="pre">1087:</span> <span class="pre">'GLONASS</span> <span class="pre">MSM7',</span> <span class="pre">1088:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1089:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1090:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1091:</span> <span class="pre">'Galileo</span> <span class="pre">MSM1',</span> <span class="pre">1092:</span> <span class="pre">'Galileo</span> <span class="pre">MSM2',</span> <span class="pre">1093:</span> <span class="pre">'Galileo</span> <span class="pre">MSM3',</span> <span class="pre">1094:</span> <span class="pre">'Galileo</span> <span class="pre">MSM4',</span> <span class="pre">1095:</span> <span class="pre">'Galileo</span> <span class="pre">MSM5',</span> <span class="pre">1096:</span> <span class="pre">'Galileo</span> <span class="pre">MSM6',</span> <span class="pre">1097:</span> <span class="pre">'Galileo</span> <span class="pre">MSM7',</span> <span class="pre">1098:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1099:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1100:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1101:</span> <span class="pre">'SBAS</span> <span class="pre">MSM1',</span> <span class="pre">1102:</span> <span class="pre">'SBAS</span> <span class="pre">MSM2',</span> <span class="pre">1103:</span> <span class="pre">'SBAS</span> <span class="pre">MSM3',</span> <span class="pre">1104:</span> <span class="pre">'SBAS</span> <span class="pre">MSM4',</span> <span class="pre">1105:</span> <span class="pre">'SBAS</span> <span class="pre">MSM5',</span> <span class="pre">1106:</span> <span class="pre">'SBAS</span> <span class="pre">MSM6',</span> <span class="pre">1107:</span> <span class="pre">'SBAS</span> <span class="pre">MSM7',</span> <span class="pre">1108:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1109:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1110:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1111:</span> <span class="pre">'QZSS</span> <span class="pre">MSM1',</span> <span class="pre">1112:</span> <span class="pre">'QZSS</span> <span class="pre">MSM2',</span> <span class="pre">1113:</span> <span class="pre">'QZSS</span> <span class="pre">MSM3',</span> <span class="pre">1114:</span> <span class="pre">'QZSS</span> <span class="pre">MSM4',</span> <span class="pre">1115:</span> <span class="pre">'QZSS</span> <span class="pre">MSM5',</span> <span class="pre">1116:</span> <span class="pre">'QZSS</span> <span class="pre">MSM6',</span> <span class="pre">1117:</span> <span class="pre">'QZSS</span> <span class="pre">MSM7',</span> <span class="pre">1118:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1119:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1120:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1121:</span> <span class="pre">'BeiDou</span> <span class="pre">MSM1',</span> <span class="pre">1122:</span> <span class="pre">'BeiDou</span> <span class="pre">MSM2',</span> <span class="pre">1123:</span> <span class="pre">'BeiDou</span> <span class="pre">MSM3',</span> <span class="pre">1124:</span> <span class="pre">'BeiDou</span> <span class="pre">MSM4',</span> <span class="pre">1125:</span> <span class="pre">'BeiDou</span> <span class="pre">MSM5',</span> <span class="pre">1126:</span> <span class="pre">'BeiDou</span> <span class="pre">MSM6',</span> <span class="pre">1127:</span> <span class="pre">'BeiDou</span> <span class="pre">MSM7',</span> <span class="pre">1128:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1129:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1130:</span> <span class="pre">'Reserved</span> <span class="pre">MSM',</span> <span class="pre">1131:</span> <span class="pre">'IRNSS</span> <span class="pre">MSM1</span> <span class="pre">(Experimental,</span> <span class="pre">not</span> <span class="pre">implemented)',</span> <span class="pre">1132:</span> <span class="pre">'IRNSS</span> <span class="pre">MSM2</span> <span class="pre">(Experimental,</span> <span class="pre">not</span> <span class="pre">implemented)',</span> <span class="pre">1133:</span> <span class="pre">'IRNSS</span> <span class="pre">MSM3</span> <span class="pre">(Experimental,</span> <span class="pre">not</span> <span class="pre">implemented)',</span> <span class="pre">1134:</span> <span class="pre">'IRNSS</span> <span class="pre">MSM4</span> <span class="pre">(Experimental,</span> <span class="pre">not</span> <span class="pre">implemented)',</span> <span class="pre">1135:</span> <span class="pre">'IRNSS</span> <span class="pre">MSM5</span> <span class="pre">(Experimental,</span> <span class="pre">not</span> <span class="pre">implemented)',</span> <span class="pre">1136:</span> <span class="pre">'IRNSS</span> <span class="pre">MSM6</span> <span class="pre">(Experimental,</span> <span class="pre">not</span> <span class="pre">implemented)',</span> <span class="pre">1137:</span> <span class="pre">'IRNSS</span> <span class="pre">MSM7</span> <span class="pre">(Experimental,</span> <span class="pre">not</span> <span class="pre">implemented)',</span> <span class="pre">1138:</span> <span class="pre">'Reserved</span> <span class="pre">MSM</span> <span class="pre">(Experimental)',</span> <span class="pre">1139:</span> <span class="pre">'Reserved</span> <span class="pre">MSM</span> <span class="pre">(Experimental)',</span> <span class="pre">1140:</span> <span class="pre">'Reserved</span> <span class="pre">MSM</span> <span class="pre">(Experimental)',</span> <span class="pre">1230:</span> <span class="pre">'GLONASS</span> <span class="pre">L1</span> <span class="pre">and</span> <span class="pre">L2</span> <span class="pre">Code-Phase</span> <span class="pre">Biases'}</span></em><a class="headerlink" href="#ntripstreams.Rtcm3.messageDescriptionText" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.Rtcm3.mjd">
+<span class="sig-name descname"><span class="pre">mjd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unixTimestamp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntripstreams.Rtcm3.mjd" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.Rtcm3.msmConstellation">
+<span class="sig-name descname"><span class="pre">msmConstellation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messageType</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntripstreams.Rtcm3.msmConstellation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ntripstreams.Rtcm3.msmSignalTypes">
+<span class="sig-name descname"><span class="pre">msmSignalTypes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">messageType</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">msmSignals</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntripstreams.Rtcm3.msmSignalTypes" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ntripstreams.crc24q">
+<span class="sig-prename descclassname"><span class="pre">ntripstreams.</span></span><span class="sig-name descname"><span class="pre">crc24q</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntripstreams.crc24q" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate Qualcomm 24 bit cyclic redundancy check</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Qualcomm 24 bit crc remainder (checksum)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ntripstreams.crcNmea">
+<span class="sig-prename descclassname"><span class="pre">ntripstreams.</span></span><span class="sig-name descname"><span class="pre">crcNmea</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ntripstreams.crcNmea" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="install.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Lars Stenseng.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
