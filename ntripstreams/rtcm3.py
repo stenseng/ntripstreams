@@ -3,7 +3,7 @@
 """
 Created on Fri May  7 11:15:55 2021
 
-i@author: Lars Stenseng
+@author: Lars Stenseng
 @mail: lars@stenseng.net
 """
 

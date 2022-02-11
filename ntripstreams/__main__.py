@@ -8,18 +8,20 @@
 import argparse
 import asyncio
 import logging
+import typing
 from signal import SIGINT, SIGTERM, signal
+from sys import exit
 
 from ntripstreams.ntripstreams import NtripStream
 from ntripstreams.rtcm3 import Rtcm3
 
 
-def procSigint(signum, frame):
+def procSigint(signum: int, frame: typing.types.FrameType) -> None:
     logging.warning("Received SIGINT. Shutting down, Adjø!")
     exit(3)
 
 
-def procSigterm(signum, frame):
+def procSigterm(signum: int, frame: typing.types.FrameType) -> None:
     logging.warning("Received SIGTERM. Shutting down, Adjø!")
     exit(4)
 
@@ -28,7 +30,38 @@ signal(SIGINT, procSigint)
 signal(SIGTERM, procSigterm)
 
 
-async def procRtcmStream(url, mountPoint, user=None, passwd=None, fail=0, retry=5):
+async def procRtcmStream(
+    url: str,
+    mountPoint: str,
+    user: str = None,
+    passwd: str = None,
+    fail: int = 0,
+    retry: int = 5,
+) -> None:
+    """
+
+
+    Parameters
+    ----------
+    url : str
+        DESCRIPTION.
+    mountPoint : str
+        DESCRIPTION.
+    user : str, optional
+        DESCRIPTION. The default is None.
+    passwd : str, optional
+        DESCRIPTION. The default is None.
+    fail : int, optional
+        DESCRIPTION. The default is 0.
+    retry : int, optional
+        DESCRIPTION. The default is 5.
+
+    Returns
+    -------
+    None
+        DESCRIPTION.
+
+    """
     ntripstream = NtripStream()
     rtcmMessage = Rtcm3()
     try:
@@ -83,16 +116,36 @@ async def procRtcmStream(url, mountPoint, user=None, passwd=None, fail=0, retry=
                     signals = rtcmMessage.msmSignalTypes(messageType, data[0][10])
                     numSignals = len(data[2])
                 logging.info(
-                    f"{mountPoint}:RTCM message #:{messageType}"
-                    f" Constellation: {rtcmMessage.constellation(messageType)}"
-                    f" GNSS: {data[0][2]}"
-                    f" Sats: {len(data[1])}"
-                    f" Signals: {numSignals}"
+                    f"{mountPoint}:RTCM message #:{messageType},"
+                    f" Constellation: {rtcmMessage.constellation(messageType)},"
+                    f" GNSS: {data[0][2]},"
+                    f" Sats: {len(data[1])},"
+                    f" Signals: {numSignals},"
                     f" Signal Types: {signals}"
                 )
 
 
-async def rtcmStreamTasks(url, mountPoints, user, passwd):
+async def rtcmStreamTasks(url: str, mountPoints: str, user: str, passwd: str) -> None:
+    """
+
+
+    Parameters
+    ----------
+    url : str
+        DESCRIPTION.
+    mountPoints : str
+        DESCRIPTION.
+    user : str
+        DESCRIPTION.
+    passwd : str
+        DESCRIPTION.
+
+    Returns
+    -------
+    None
+        DESCRIPTION.
+
+    """
     tasks = {}
     for mountPoint in mountPoints:
         tasks[mountPoint] = asyncio.create_task(
