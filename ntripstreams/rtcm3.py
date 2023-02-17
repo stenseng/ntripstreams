@@ -38,7 +38,7 @@ class Rtcm3:
 
     def msmSignalTypes(self, messageType: int, msmSignals):
         signals = [
-            self.__msmSignalTypes[self.msmConstellation(messageType)][i]
+            self.__msmSignalTypes[self.constellation(messageType)][i]
             for i, mask in enumerate(msmSignals)
             if mask == "1"
         ]
