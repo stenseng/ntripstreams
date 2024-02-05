@@ -476,43 +476,46 @@ class NtripStream:
         rtcm3FrameHeaderFormat = "bin:8, pad:6, uint:10"
         rtcmFrameComplete = False
         while not rtcmFrameComplete:
-            if self.ntripStreamChunked:
-                try:
-                    rawLine = await self.ntripReader.readuntil(b"\r\n")
-                    length = int(rawLine[:-2].decode("ISO-8859-1"), 16)
-                    rawLine = await self.ntripReader.readexactly(length + 2)
-                except (
-                    asyncio.IncompleteReadError,
-                    asyncio.LimitOverrunError,
-                ) as error:
-                    raise ConnectionError(
-                        f"Connection to {self.casterUrl} failed with: {error}"
-                        "during data reception."
-                    ) from None
-                    logging.error(
-                        f"Connection to {self.casterUrl} failed with: {error}"
-                        "during data reception."
-                    )
-                if rawLine[-2:] != b"\r\n":
-                    logging.error(
-                        f"{self.ntripMountPoint}:Chunk malformed. "
-                        "Expected \r\n as ending. Closing connection!"
-                    )
-                    raise IOError("Chunk malformed ")
-                receivedBytes = BitStream(rawLine[:-2])
-                logging.debug(f"Chunk {receivedBytes.length}:{length * 8}. ")
-            else:
-                rawLine = await self.ntripReader.read(2048)
-                receivedBytes = BitStream(rawLine)
             timeStamp = time()
-            if self.ntripStreamChunked and receivedBytes.length != length * 8:
-                logging.error(
-                    f"{self.ntripMountPoint}:Chunk incomplete "
-                    f"{receivedBytes.length}:{length * 8}. "
-                    "Closing connection! "
-                )
-                raise IOError("Chunk incomplete ")
-            self.rtcmFrameBuffer += receivedBytes
+            if self.rtcmFrameBuffer.length < 2048:
+                if self.ntripStreamChunked:
+                    try:
+                        rawLine = await self.ntripReader.readuntil(b"\r\n")
+                        length = int(rawLine[:-2].decode("ISO-8859-1"), 16)
+                        rawLine = await self.ntripReader.readexactly(length + 2)
+                    except (
+                        asyncio.IncompleteReadError,
+                        asyncio.LimitOverrunError,
+                    ) as error:
+                        raise ConnectionError(
+                            f"Connection to {self.casterUrl} failed with: {error}"
+                            "during data reception."
+                        ) from None
+                        logging.error(
+                            f"Connection to {self.casterUrl} failed with: {error}"
+                            "during data reception."
+                        )
+                    if rawLine[-2:] != b"\r\n":
+                        logging.error(
+                            f"{self.ntripMountPoint}:Chunk malformed. "
+                            "Expected \r\n as ending. Closing connection!"
+                        )
+                        raise IOError("Chunk malformed ")
+                    receivedBytes = BitStream(rawLine[:-2])
+                    logging.debug(f"Chunk {receivedBytes.length}:{length * 8}. ")
+                else:
+                    rawLine = await self.ntripReader.read(2048)
+                    receivedBytes = BitStream(rawLine)
+                
+                if self.ntripStreamChunked and receivedBytes.length != length * 8:
+                    logging.error(
+                        f"{self.ntripMountPoint}:Chunk incomplete "
+                        f"{receivedBytes.length}:{length * 8}. "
+                        "Closing connection! "
+                    )
+                    raise IOError("Chunk incomplete ")
+                self.rtcmFrameBuffer += receivedBytes
+
             if not self.rtcmFrameAligned:
                 rtcmFramePos = self.rtcmFrameBuffer.find(
                     rtcm3FramePreample, bytealigned=True
