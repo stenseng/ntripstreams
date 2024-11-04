@@ -477,7 +477,7 @@ class NtripStream:
         rtcmFrameComplete = False
         while not rtcmFrameComplete:
             timeStamp = time()
-            if self.rtcmFrameBuffer.length < 4096:
+            if self.rtcmFrameBuffer.length < 8192:
                 if self.ntripStreamChunked:
                     try:
                         rawLine = await self.ntripReader.readuntil(b"\r\n")
