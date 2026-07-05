@@ -8,14 +8,36 @@ Created on Fri May  7 11:15:55 2021
 """
 
 import logging
+import re
 from time import time
 
 from bitstring import Bits, pack
 
 
+def _readfmt(fmt: str) -> str:
+    """Return *fmt* with ``=field`` labels and value assertions removed.
+
+    bitstring >= 4.2 no longer accepts the ``token=name`` label syntax (e.g.
+    ``uint:12=refStationId``) nor the ``token=value`` assertion syntax (e.g.
+    ``uint:12=1004``) in ``readlist`` / ``unpack``. Those methods return
+    positional lists, and the message type is already dispatched via ``peek``,
+    so both forms were redundant here. ``pack`` still consumes the labelled
+    formats and is left untouched.
+    """
+    return re.sub(r"=[A-Za-z0-9_]+", "", fmt)
+
+
 class Rtcm3:
     def __init__(self):
         pass
+
+    def _rl(self, message, fmt):
+        """readlist with ``=name`` labels stripped for bitstring >= 4.2."""
+        return message.readlist(_readfmt(fmt))
+
+    def _up(self, message, fmt):
+        """unpack with ``=name`` labels stripped for bitstring >= 4.2."""
+        return message.unpack(_readfmt(fmt))
 
     def mjd(self, unixTimestamp):
         mjd = int(unixTimestamp / 86400.0 + 40587.0)
@@ -73,14 +95,14 @@ class Rtcm3:
             return message
 
     def __decodeMsmHeader(self, message):
-        head = message.readlist(self.__msgMsmHead)
+        head = self._rl(message, self.__msgMsmHead)
         numSats = Bits(bin=head[9]).bin.count("1")
         numSignals = Bits(bin=head[10]).bin.count("1")
         cellMask = message.read(f"bin:{numSats * numSignals}")
         head.append(cellMask)
         numCells = Bits(bin=head[11]).bin.count("1")
         if head[0] >= 1081 and head[0] <= 1087:
-            glonassEpoch = message.unpack(self.__msgMsmHeadGlonassEpoch)
+            glonassEpoch = self._up(message, self.__msgMsmHeadGlonassEpoch)
             head[2] = glonassEpoch[1]
             head.append(glonassEpoch[0])
         return head, numSats, numSignals, numCells
@@ -93,38 +115,38 @@ class Rtcm3:
         messageType = message.peek("uint:12")
         logging.debug(f"Decoding message type {messageType}")
         if messageType == 1001:
-            head = message.readlist(self.__msg1001Head)
+            head = self._rl(message, self.__msg1001Head)
             for _ in range(head[4]):
-                satData.append(message.readlist(self.__msg1001Obs))
+                satData.append(self._rl(message, self.__msg1001Obs))
         elif messageType == 1002:
-            head = message.readlist(self.__msg1002Head)
+            head = self._rl(message, self.__msg1002Head)
             for _ in range(head[4]):
-                satData.append(message.readlist(self.__msg1002Obs))
+                satData.append(self._rl(message, self.__msg1002Obs))
         elif messageType == 1003:
-            head = message.readlist(self.__msg1003Head)
+            head = self._rl(message, self.__msg1003Head)
             for _ in range(head[4]):
-                satData.append(message.readlist(self.__msg1003Obs))
+                satData.append(self._rl(message, self.__msg1003Obs))
         elif messageType == 1004:
-            head = message.readlist(self.__msg1004Head)
+            head = self._rl(message, self.__msg1004Head)
             for _ in range(head[4]):
-                satData.append(message.readlist(self.__msg1004Obs))
+                satData.append(self._rl(message, self.__msg1004Obs))
 
         elif messageType == 1009:
-            head = message.readlist(self.__msg1009Head)
+            head = self._rl(message, self.__msg1009Head)
             for _ in range(head[4]):
-                satData.append(message.readlist(self.__msg1009Obs))
+                satData.append(self._rl(message, self.__msg1009Obs))
         elif messageType == 1010:
-            head = message.readlist(self.__msg1010Head)
+            head = self._rl(message, self.__msg1010Head)
             for _ in range(head[4]):
-                satData.append(message.readlist(self.__msg1010Obs))
+                satData.append(self._rl(message, self.__msg1010Obs))
         elif messageType == 1011:
-            head = message.readlist(self.__msg1011Head)
+            head = self._rl(message, self.__msg1011Head)
             for _ in range(head[4]):
-                satData.append(message.readlist(self.__msg1011Obs))
+                satData.append(self._rl(message, self.__msg1011Obs))
         elif messageType == 1012:
-            head = message.readlist(self.__msg1012Head)
+            head = self._rl(message, self.__msg1012Head)
             for _ in range(head[4]):
-                satData.append(message.readlist(self.__msg1012Obs))
+                satData.append(self._rl(message, self.__msg1012Obs))
 
         elif (
             (messageType >= 1071 and messageType <= 1077)
@@ -141,42 +163,42 @@ class Rtcm3:
                 or (messageType % 10 == 3)
             ):
                 for obs in self.__msgMsm123Sat:
-                    satData.append(message.readlist(f"{numSats}*{obs}"))
+                    satData.append(self._rl(message, f"{numSats}*{obs}"))
             elif (messageType % 10 == 4) or (messageType % 10 == 6):
                 for obs in self.__msgMsm46Sat:
-                    satData.append(message.readlist(f"{numSats}*{obs}"))
+                    satData.append(self._rl(message, f"{numSats}*{obs}"))
             elif (messageType % 10 == 5) or (messageType % 10 == 7):
                 for obs in self.__msgMsm57Sat:
-                    satData.append(message.readlist(f"{numSats}*{obs}"))
+                    satData.append(self._rl(message, f"{numSats}*{obs}"))
             satData = [[row[i] for row in satData] for i in range(len(satData[0]))]
 
             if messageType % 10 == 1:
                 for obs in self.__msgMsm1Signal:
-                    signalData.append(message.readlist(f"{numCells}*{obs}"))
+                    signalData.append(self._rl(message, f"{numCells}*{obs}"))
             elif messageType % 10 == 2:
                 for obs in self.__msgMsm2Signal:
-                    signalData.append(message.readlist(f"{numCells}*{obs}"))
+                    signalData.append(self._rl(message, f"{numCells}*{obs}"))
             elif messageType % 10 == 3:
                 for obs in self.__msgMsm3Signal:
-                    signalData.append(message.readlist(f"{numCells}*{obs}"))
+                    signalData.append(self._rl(message, f"{numCells}*{obs}"))
             elif messageType % 10 == 4:
                 for obs in self.__msgMsm4Signal:
-                    signalData.append(message.readlist(f"{numCells}*{obs}"))
+                    signalData.append(self._rl(message, f"{numCells}*{obs}"))
             elif messageType % 10 == 5:
                 for obs in self.__msgMsm5Signal:
-                    signalData.append(message.readlist(f"{numCells}*{obs}"))
+                    signalData.append(self._rl(message, f"{numCells}*{obs}"))
             elif messageType % 10 == 6:
                 for obs in self.__msgMsm6Signal:
-                    signalData.append(message.readlist(f"{numCells}*{obs}"))
+                    signalData.append(self._rl(message, f"{numCells}*{obs}"))
             elif messageType % 10 == 7:
                 for obs in self.__msgMsm7Signal:
-                    signalData.append(message.readlist(f"{numCells}*{obs}"))
+                    signalData.append(self._rl(message, f"{numCells}*{obs}"))
             signalData = [
                 [row[i] for row in signalData] for i in range(len(signalData[0]))
             ]
 
         elif messageType == 1029:
-            head = message.readlist(self.__msg1029)
+            head = self._rl(message, self.__msg1029)
         else:
             head = "Message type not implemented"
         data = [head, satData, signalData]
@@ -337,13 +359,13 @@ class Rtcm3:
         "uint:6=satId, bool=l1CodeFlag, uint:24=l1PseudoRange, "
         "int:20=l1PhaserangeL1PseudorangeDiff, uint:7=l1LockTimeIndicator"
     )
-    __msg1002Obs = __msg1001Obs + "uint:8=l1PseudorangeAmbiguity, uint:8=l1CNR"
+    __msg1002Obs = __msg1001Obs + ", uint:8=l1PseudorangeAmbiguity, uint:8=l1CNR"
     __msg1003Obs = (
-        __msg1001Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
+        __msg1001Obs + ", uint:2=l2CodeFlag, int:14=l2L1PseudorangeDiff,"
         "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator"
     )
     __msg1004Obs = (
-        __msg1002Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
+        __msg1002Obs + ", uint:2=l2CodeFlag, int:14=l2L1PseudorangeDiff,"
         "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator, "
         "uint:8=l2CNR"
     )
@@ -358,16 +380,16 @@ class Rtcm3:
     __msg1011Head = "uint:12=1011, " + __msg1009_12Head
     __msg1012Head = "uint:12=1012, " + __msg1009_12Head
     __msg1009Obs = (
-        "uint:6=satId, bool=codeFlag, uint:5=freqChannelnum,  uint:24=l1Pseudorange, "
+        "uint:6=satId, bool=codeFlag, uint:5=freqChannelnum, uint:24=l1Pseudorange, "
         "int:20=l1PhaserangeL1PseudorangeDiff, uint:7=l1LockTimeIndicator"
     )
-    __msg1010Obs = __msg1009Obs + "uint:8=l1PseudorangeAmbiguity, uint:8=l1CNR"
+    __msg1010Obs = __msg1009Obs + ", uint:8=l1PseudorangeAmbiguity, uint:8=l1CNR"
     __msg1011Obs = (
-        __msg1009Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
+        __msg1009Obs + ", uint:2=l2CodeFlag, int:14=l2L1PseudorangeDiff,"
         "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator"
     )
     __msg1012Obs = (
-        __msg1010Obs + "bool=l2CodeFlag, uint:24=l2L1PseudorangeDiff, "
+        __msg1010Obs + ", uint:2=l2CodeFlag, int:14=l2L1PseudorangeDiff,"
         "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator, "
         "uint:8=l2CNR"
     )
