@@ -4,10 +4,7 @@ channels:
   - defaults
 dependencies:
   - python=3.12
-  - spyder
   - bitstring>=4.4,<5
   - pip
   - pip:
       - -e .[dev]
-variables:
-  QT_MAC_WANTS_LAYER: 1
