@@ -1,0 +1,52 @@
+# Byte-compiled / optimized / cache
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+
+# Distribution / packaging
+build/
+dist/
+sdist/
+wheels/
+*.egg
+*.egg-info/
+.eggs/
+MANIFEST
+
+# Test & coverage artifacts (see .github/workflows/unittest.yml)
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+junit/
+*.cover
+
+# Type checkers / linters
+.mypy_cache/
+.dmypy.json
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Sphinx documentation build
+docs/_build/
+
+# Editors / IDEs
+.vscode/
+.idea/
+.spyproject/
+.spyderproject/
+.ropeproject/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
