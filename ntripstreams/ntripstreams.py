@@ -69,15 +69,13 @@ class NtripStream:
                     self.casterUrl.hostname, self.casterUrl.port
                 )
         except TimeoutError as error:
+            logging.error(f"Connection to {casterUrl} timed out: {error}")
             raise TimeoutError(
                 f"Connection to {casterUrl} timed out: {error}"
             ) from None
-            logging.error(f"Connection to {casterUrl} timed out: {error}")
-            return False
         except OSError as error:
-            raise OSError(f"Connection to {casterUrl} failed with: {error}") from None
             logging.error(f"Connection to {casterUrl} failed with: {error}")
-            return False
+            raise OSError(f"Connection to {casterUrl} failed with: {error}") from None
         logging.info(
             f"{self.ntripMountPoint}: Connection to {casterUrl} open. "
             "Ready to write."
@@ -148,7 +146,7 @@ class NtripStream:
         self.ntripMountPoint = ntripMountPoint
         timestamp = strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
         if nmeaString:
-            self.nmeaString = nmeaString.encode("ISO-8859-1")
+            self.nmeaString = nmeaString.rstrip("\r\n") + "\r\n"
         if ntripUser and ntripPassword:
             ntripAuth = b64encode(
                 (ntripUser + ":" + ntripPassword).encode("ISO-8859-1")
@@ -209,7 +207,7 @@ class NtripStream:
                 ntripAuth = b64encode(
                     (ntripUser + ":" + ntripPassword).encode("ISO-8859-1")
                 ).decode()
-            self.ntripAuthString = f"Authorization: Basic {ntripAuth}\r\n"
+                self.ntripAuthString = f"Authorization: Basic {ntripAuth}\r\n"
             self.ntripRequestHeader = (
                 f"POST /{ntripMountPoint} HTTP/1.1\r\n"
                 f"Host: {self.casterUrl.netloc}\r\n"
@@ -223,6 +221,7 @@ class NtripStream:
                 "\r\n"
             ).encode("ISO-8859-1")
         elif self.ntripVersion == 1:
+            ntripAuth = ""
             if ntripPassword:
                 ntripAuth = b64encode(ntripPassword.encode("ISO-8859-1")).decode()
             self.ntripRequestHeader = (
@@ -278,10 +277,10 @@ class NtripStream:
             try:
                 line = await self.ntripReader.readline()
             except (asyncio.IncompleteReadError, asyncio.LimitOverrunError) as error:
+                logging.error(f"Connection to {self.casterUrl} failed with: {error}")
                 raise ConnectionError(
                     f"Connection to {self.casterUrl} failed with: {error}"
                 ) from None
-                logging.error(f"Connection to {self.casterUrl} failed with: {error}")
             ntripResponseHeaderTimestamp.append(time())
             if not line:
                 break
@@ -326,11 +325,10 @@ class NtripStream:
             )
             for line in self.ntripResponseHeader:
                 logging.error(f"{self.ntripMountPoint}: TCP response: {line}")
+            self.ntripWriter.close()
             raise ConnectionError(
                 f"{self.ntripMountPoint}: {self.ntripResponseHeader[0]}"
             )
-            self.ntripWriter.close()
-            return False
 
     async def sendRequestHeader(self) -> None:
         """
@@ -380,11 +378,10 @@ class NtripStream:
             try:
                 line = await self.ntripReader.readline()
             except (asyncio.IncompleteReadError, asyncio.LimitOverrunError) as error:
+                logging.error(f"Connection to {self.casterUrl} failed with: {error}")
                 raise ConnectionError(
                     f"Connection to {self.casterUrl} failed with: {error}"
                 ) from None
-                logging.error(f"Connection to {self.casterUrl} failed with: {error}")
-                return []
             if not line:
                 break
             line = line.decode("ISO-8859-1").rstrip()
@@ -468,7 +465,7 @@ class NtripStream:
         await self.sendRequestHeader()
 
     async def sendRtcmFrame(self, rtcmFrame: BitStream) -> None:
-        self.ntripWriter.write(rtcmFrame)
+        self.ntripWriter.write(rtcmFrame.tobytes())
         await self.ntripWriter.drain()
 
     async def getRtcmFrame(self):
@@ -485,14 +482,14 @@ class NtripStream:
                     asyncio.IncompleteReadError,
                     asyncio.LimitOverrunError,
                 ) as error:
-                    raise ConnectionError(
-                        f"Connection to {self.casterUrl} failed with: {error}"
-                        "during data reception."
-                    ) from None
                     logging.error(
                         f"Connection to {self.casterUrl} failed with: {error}"
                         "during data reception."
                     )
+                    raise ConnectionError(
+                        f"Connection to {self.casterUrl} failed with: {error}"
+                        "during data reception."
+                    ) from None
                 if rawLine[-2:] != b"\r\n":
                     logging.error(
                         f"{self.ntripMountPoint}:Chunk malformed. "
