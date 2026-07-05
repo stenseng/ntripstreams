@@ -1,0 +1,13 @@
+# zizmor configuration (https://docs.zizmor.sh/configuration/)
+rules:
+  unpinned-uses:
+    config:
+      # Require a ref pin (tag/branch) but allow readable version tags such as
+      # @v5 rather than mandating full commit-SHA pins.
+      policies:
+        "*": ref-pin
+  use-trusted-publishing:
+    # This project publishes to (Test)PyPI with API tokens stored as GitHub
+    # secrets by design; Trusted Publishing is out of scope here.
+    ignore:
+      - publish-to-test-n-pypi.yml
