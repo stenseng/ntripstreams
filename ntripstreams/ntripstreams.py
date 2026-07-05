@@ -530,7 +530,7 @@ class NtripStream:
                 # longer guarantees pos == 0 after slicing/concatenating the
                 # buffer, which would otherwise peek the header at a wrong offset.
                 self.rtcmFrameBuffer.pos = 0
-                (rtcmPreAmple, rtcmPayloadLength) = self.rtcmFrameBuffer.peeklist(
+                rtcmPreAmple, rtcmPayloadLength = self.rtcmFrameBuffer.peeklist(
                     rtcm3FrameHeaderFormat
                 )
                 rtcmFrameLength = (rtcmPayloadLength + 6) * 8

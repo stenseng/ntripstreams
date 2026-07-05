@@ -338,7 +338,7 @@ class Rtcm3:
         1138: "Reserved MSM (Experimental)",
         1139: "Reserved MSM (Experimental)",
         1140: "Reserved MSM (Experimental)",
-        1230: "GLONASS L1 and L2 Code-Phase Biases"
+        1230: "GLONASS L1 and L2 Code-Phase Biases",
         # 4001-4095: "Proprietary Messages"
     }
 

@@ -21,6 +21,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  statuses: write
+
 ###############
 # Set the Job #
 ###############
@@ -43,6 +47,7 @@ jobs:
         with:
           # Full git history is needed to get a proper list of changed files within `super-linter`
           fetch-depth: 0
+          persist-credentials: false
 
       ################################
       # Run Linter against code base #
@@ -51,6 +56,16 @@ jobs:
         uses: super-linter/super-linter@v8
         env:
           VALIDATE_ALL_CODEBASE: true
-          VALIDATE_PYTHON_MYPY: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Python: black is the formatter and ruff + flake8 the linters.
+          # Disable the redundant/conflicting Python tools.
+          VALIDATE_PYTHON_MYPY: false
+          VALIDATE_PYTHON_PYLINT: false
+          VALIDATE_PYTHON_ISORT: false
+          VALIDATE_PYTHON_RUFF_FORMAT: false
+          # Redundant formatters / noisy checks for this repo.
+          VALIDATE_BIOME_FORMAT: false
+          VALIDATE_JSON_PRETTIER: false
+          VALIDATE_YAML_PRETTIER: false
+          VALIDATE_JSCPD: false
