@@ -1,10 +1,13 @@
 name: ntrip
 channels:
-  - defaults
   - conda-forge
+  - defaults
 dependencies:
-  - python=3.9
-  - spyder=5.0
-  - bitstring=3.1
+  - python=3.12
+  - spyder
+  - bitstring>=4.1
+  - pip
+  - pip:
+      - -e .[dev]
 variables:
   QT_MAC_WANTS_LAYER: 1
