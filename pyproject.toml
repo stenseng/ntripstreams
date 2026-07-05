@@ -22,7 +22,9 @@ classifiers = [
     "Topic :: Internet",
     "Topic :: Scientific/Engineering :: GIS",
 ]
-dependencies = ["bitstring>=4.1"]
+# NOTE: bitstring 4.2 removed the "name:length=field" readlist grammar that
+# Rtcm3 relies on, so the decoder currently requires the 4.1.x line.
+dependencies = ["bitstring>=4.1,<4.2"]
 dynamic = ["version"]
 
 [project.urls]
