@@ -10,6 +10,7 @@ Created on Wed Jun  9 09:33:07 2021
 import unittest
 
 from bitstring import BitStream
+
 from ntripstreams.crc import crc24q, crcNmea, genLookup
 
 

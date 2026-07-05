@@ -57,8 +57,8 @@ line-length = 88
 target-version = "py310"
 
 [tool.ruff.lint]
-# E/F = pycodestyle+pyflakes, W = warnings, I = import sorting, UP = pyupgrade.
-select = ["E", "F", "W", "I", "UP"]
+# E/F = pycodestyle+pyflakes, W = warnings, I = import sorting.
+select = ["E", "F", "W", "I"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

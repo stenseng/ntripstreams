@@ -8,6 +8,7 @@
 import argparse
 import asyncio
 import logging
+import os
 from signal import SIGINT, SIGTERM, signal
 from sys import exit
 from types import FrameType
@@ -15,6 +16,19 @@ from typing import Optional
 
 from ntripstreams.ntripstreams import NtripStream
 from ntripstreams.rtcm3 import Rtcm3
+
+ENV_PREFIX = "NTRIP_"
+
+
+def env_default(name: str) -> Optional[str]:
+    """Return the environment variable NTRIP_<name>, or None if unset/empty.
+
+    Used as the argparse ``default`` so an explicit command line value takes
+    precedence over the environment variable, which in turn takes precedence
+    over the built-in default.
+    """
+    value = os.environ.get(ENV_PREFIX + name)
+    return value if value else None
 
 
 def procSigint(signum: int, frame: Optional[FrameType]) -> None:
@@ -150,23 +164,44 @@ async def rtcmStreamTasks(url: str, mountPoints: str, user: str, passwd: str) ->
         await tasks[mountPoint]
 
 
-def main() -> None:
-    signal(SIGINT, procSigint)
-    signal(SIGTERM, procSigterm)
+def parse_args(argv: Optional[list] = None) -> argparse.Namespace:
+    """Parse command line arguments, falling back to NTRIP_* environment vars.
 
-    parser = argparse.ArgumentParser()
+    Resolution priority for each option is: command line value, then the
+    matching environment variable, then the built-in default.
+    """
+    parser = argparse.ArgumentParser(
+        epilog="Most options fall back to environment variables when omitted: "
+        "NTRIP_URL, NTRIP_MOUNTPOINT (comma separated), NTRIP_USER, "
+        "NTRIP_PASSWORD and NTRIP_LOGFILE. A command line value always "
+        "overrules the environment variable."
+    )
     parser.add_argument(
         "url",
-        help="Ntripcaster url and port. (e.g. http[s]://caster.hostname.net:2101)",
+        nargs="?",
+        default=env_default("URL"),
+        help="Ntripcaster url and port. (e.g. http[s]://caster.hostname.net:2101) "
+        "[env: NTRIP_URL]",
     )
     parser.add_argument(
         "-m",
         "--mountpoint",
         action="append",
-        help="Name of mountpoint without leading / (e.g. PNT1).",
+        help="Name of mountpoint without leading / (e.g. PNT1). May be repeated. "
+        "[env: NTRIP_MOUNTPOINT, comma separated]",
     )
-    parser.add_argument("-u", "--user", help="Username to access Ntrip " "caster.")
-    parser.add_argument("-p", "--passwd", help="Password  to access Ntrip caster.")
+    parser.add_argument(
+        "-u",
+        "--user",
+        default=env_default("USER"),
+        help="Username to access Ntrip caster. [env: NTRIP_USER]",
+    )
+    parser.add_argument(
+        "-p",
+        "--passwd",
+        default=env_default("PASSWORD"),
+        help="Password to access Ntrip caster. [env: NTRIP_PASSWORD]",
+    )
     parser.add_argument(
         "-s",
         "--server",
@@ -177,12 +212,34 @@ def main() -> None:
         "-1", "--ntrip1", action="store_true", help="Use Ntrip 1 protocol."
     )
     parser.add_argument(
-        "-l", "--logfile", help="Log to file. Default output is terminal."
+        "-l",
+        "--logfile",
+        default=env_default("LOGFILE"),
+        help="Log to file. Default output is terminal. [env: NTRIP_LOGFILE]",
     )
     parser.add_argument(
         "-v", "--verbosity", action="count", default=0, help="Increase verbosity level."
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+
+    # -m/--mountpoint uses action="append", so fall back to the environment
+    # only when no mountpoint was given on the command line (comma separated).
+    if not args.mountpoint:
+        env_mountpoints = env_default("MOUNTPOINT")
+        if env_mountpoints:
+            args.mountpoint = [
+                mount.strip() for mount in env_mountpoints.split(",") if mount.strip()
+            ]
+
+    if not args.url:
+        parser.error("a caster url is required (positional argument or NTRIP_URL)")
+    return args
+
+
+def main() -> None:
+    signal(SIGINT, procSigint)
+    signal(SIGTERM, procSigterm)
+    args = parse_args()
 
     logLevel = logging.ERROR
     if args.verbosity == 1:
