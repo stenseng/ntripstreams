@@ -8,26 +8,23 @@
 import argparse
 import asyncio
 import logging
-import typing
 from signal import SIGINT, SIGTERM, signal
 from sys import exit
+from types import FrameType
+from typing import Optional
 
 from ntripstreams.ntripstreams import NtripStream
 from ntripstreams.rtcm3 import Rtcm3
 
 
-def procSigint(signum: int, frame: typing.types.FrameType) -> None:
+def procSigint(signum: int, frame: Optional[FrameType]) -> None:
     logging.warning("Received SIGINT. Shutting down, Adjø!")
     exit(3)
 
 
-def procSigterm(signum: int, frame: typing.types.FrameType) -> None:
+def procSigterm(signum: int, frame: Optional[FrameType]) -> None:
     logging.warning("Received SIGTERM. Shutting down, Adjø!")
     exit(4)
-
-
-signal(SIGINT, procSigint)
-signal(SIGTERM, procSigterm)
 
 
 async def procRtcmStream(
@@ -64,39 +61,37 @@ async def procRtcmStream(
     """
     ntripstream = NtripStream()
     rtcmMessage = Rtcm3()
-    try:
-        await ntripstream.requestNtripStream(url, mountPoint, user, passwd)
-    except OSError as error:
-        logging.error(error)
-        return
     while True:
         try:
-            rtcmFrame, timeStamp = await ntripstream.getRtcmFrame()
-            fail = 0
-        except (ConnectionError, IOError):
-            if fail >= retry:
+            await ntripstream.requestNtripStream(url, mountPoint, user, passwd)
+        except (OSError, ConnectionError) as error:
+            fail += 1
+            sleepTime = min(5 * fail, 300) if fail >= retry else 2
+            logging.error(
+                f"{mountPoint}:{fail} failed attempt to connect ({error}). "
+                f"Will retry in {sleepTime} seconds!"
+            )
+            await asyncio.sleep(sleepTime)
+            continue
+        while True:
+            try:
+                rtcmFrame, timeStamp = await ntripstream.getRtcmFrame()
+                fail = 0
+            except (ConnectionError, IOError):
                 fail += 1
-                sleepTime = 5 * fail
-                if sleepTime > 300:
-                    sleepTime = 300
-                logging.error(
-                    f"{mountPoint}:{fail} failed attempt to reconnect. "
-                    f"Will retry in {sleepTime} seconds!"
+                sleepTime = min(5 * fail, 300) if fail >= retry else 2
+                logging.warning(
+                    f"{mountPoint}:Reconnecting. Attempt no. {fail} "
+                    f"in {sleepTime} seconds."
                 )
                 await asyncio.sleep(sleepTime)
-                await procRtcmStream(url, mountPoint, user, passwd, fail)
-            else:
-                fail += 1
-                logging.warning(f"{mountPoint}:Reconnecting. Attempt no. {fail}.")
-                await asyncio.sleep(2)
-                await procRtcmStream(url, mountPoint, user, passwd, fail)
-        else:
+                break
             try:
                 messageType, data = rtcmMessage.decodeRtcmFrame(rtcmFrame)
                 description = rtcmMessage.messageDescription(messageType)
             except Exception:
                 logging.info("Failed to decode RTCM frame.")
-                break
+                return
             logging.debug(
                 f"{mountPoint}:RTCM message #:{messageType}" f' "{description}".'
             )
@@ -155,67 +150,87 @@ async def rtcmStreamTasks(url: str, mountPoints: str, user: str, passwd: str) ->
         await tasks[mountPoint]
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "url", help="Ntripcaster url and port. (e.g. http[s]://caster.hostname.net:2101)"
-)
-parser.add_argument(
-    "-m",
-    "--mountpoint",
-    action="append",
-    help="Name of mountpoint without leading / (e.g. PNT1).",
-)
-parser.add_argument("-u", "--user", help="Username to access Ntrip " "caster.")
-parser.add_argument("-p", "--passwd", help="Password  to access Ntrip caster.")
-parser.add_argument(
-    "-s", "--server", action="store_true", help="Send data to Ntrip caster as a server."
-)
-parser.add_argument("-1", "--ntrip1", action="store_true", help="Use Ntrip 1 protocol.")
-parser.add_argument("-l", "--logfile", help="Log to file. Default output is terminal.")
-parser.add_argument(
-    "-v", "--verbosity", action="count", default=0, help="Increase verbosity level."
-)
-args = parser.parse_args()
+def main() -> None:
+    signal(SIGINT, procSigint)
+    signal(SIGTERM, procSigterm)
 
-logLevel = logging.ERROR
-if args.verbosity == 1:
-    logLevel = logging.WARNING
-elif args.verbosity == 2:
-    logLevel = logging.INFO
-elif args.verbosity > 2:
-    logLevel = logging.DEBUG
-if args.logfile:
-    logging.basicConfig(
-        level=logLevel,
-        filename=args.logfile,
-        format="%(asctime)s;%(levelname)s;%(message)s",
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "url",
+        help="Ntripcaster url and port. (e.g. http[s]://caster.hostname.net:2101)",
     )
-else:
-    logging.basicConfig(level=logLevel, format="%(asctime)s;%(levelname)s;%(message)s")
-ntripstream = NtripStream()
-if not args.mountpoint:
-    try:
-        sourceTable = asyncio.run(ntripstream.requestSourcetable(args.url))
-        for source in sourceTable:
-            print(source)
-    except OSError as error:
-        logging.error(error)
-else:
-    if args.server:
-        if args.ntrip1 and args.passwd:
-            ntripstream.setRequestServerHeader(
-                args.url, args.mountpoint[0], None, args.passwd, ntripVersion=1
-            )
-            print(ntripstream.ntripRequestHeader.decode())
-        elif not args.ntrip1 and args.user and args.passwd:
-            ntripstream.setRequestServerHeader(
-                args.url, args.mountpoint[0], args.user, args.passwd
-            )
-            print(ntripstream.ntripRequestHeader.decode())
-        else:
-            print(
-                "Password needed for Ntrip version 1, "
-                "user and password needed for Ntrip version 2."
-            )
+    parser.add_argument(
+        "-m",
+        "--mountpoint",
+        action="append",
+        help="Name of mountpoint without leading / (e.g. PNT1).",
+    )
+    parser.add_argument("-u", "--user", help="Username to access Ntrip " "caster.")
+    parser.add_argument("-p", "--passwd", help="Password  to access Ntrip caster.")
+    parser.add_argument(
+        "-s",
+        "--server",
+        action="store_true",
+        help="Send data to Ntrip caster as a server.",
+    )
+    parser.add_argument(
+        "-1", "--ntrip1", action="store_true", help="Use Ntrip 1 protocol."
+    )
+    parser.add_argument(
+        "-l", "--logfile", help="Log to file. Default output is terminal."
+    )
+    parser.add_argument(
+        "-v", "--verbosity", action="count", default=0, help="Increase verbosity level."
+    )
+    args = parser.parse_args()
+
+    logLevel = logging.ERROR
+    if args.verbosity == 1:
+        logLevel = logging.WARNING
+    elif args.verbosity == 2:
+        logLevel = logging.INFO
+    elif args.verbosity > 2:
+        logLevel = logging.DEBUG
+    if args.logfile:
+        logging.basicConfig(
+            level=logLevel,
+            filename=args.logfile,
+            format="%(asctime)s;%(levelname)s;%(message)s",
+        )
     else:
-        asyncio.run(rtcmStreamTasks(args.url, args.mountpoint, args.user, args.passwd))
+        logging.basicConfig(
+            level=logLevel, format="%(asctime)s;%(levelname)s;%(message)s"
+        )
+    ntripstream = NtripStream()
+    if not args.mountpoint:
+        try:
+            sourceTable = asyncio.run(ntripstream.requestSourcetable(args.url))
+            for source in sourceTable:
+                print(source)
+        except OSError as error:
+            logging.error(error)
+    else:
+        if args.server:
+            if args.ntrip1 and args.passwd:
+                ntripstream.setRequestServerHeader(
+                    args.url, args.mountpoint[0], None, args.passwd, ntripVersion=1
+                )
+                print(ntripstream.ntripRequestHeader.decode())
+            elif not args.ntrip1 and args.user and args.passwd:
+                ntripstream.setRequestServerHeader(
+                    args.url, args.mountpoint[0], args.user, args.passwd
+                )
+                print(ntripstream.ntripRequestHeader.decode())
+            else:
+                print(
+                    "Password needed for Ntrip version 1, "
+                    "user and password needed for Ntrip version 2."
+                )
+        else:
+            asyncio.run(
+                rtcmStreamTasks(args.url, args.mountpoint, args.user, args.passwd)
+            )
+
+
+if __name__ == "__main__":
+    main()
