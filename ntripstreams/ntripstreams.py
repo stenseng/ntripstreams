@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
+"""Asynchronous NTRIP client/server communication.
+
+Defines :class:`NtripStream`, an ``asyncio``-based class for connecting to an
+NTRIP caster, requesting source tables and streams, publishing as a server, and
+framing RTCM 3 messages from the received byte stream.
+
 @author: Lars Stenseng
 @mail: lars@stenseng.net
 """
@@ -19,6 +24,16 @@ from ntripstreams.crc import crc24q
 
 
 class NtripStream:
+    """An asyncio NTRIP client and server connection.
+
+    A single instance holds the connection to one caster and the state used
+    while framing RTCM 3 messages. Typical client use is to call
+    :meth:`requestSourcetable` to list mountpoints, or
+    :meth:`requestNtripStream` followed by repeated :meth:`getRtcmFrame` calls
+    to read the stream. Server use publishes with :meth:`requestNtripServer`
+    and :meth:`sendRtcmFrame`.
+    """
+
     def __init__(self):
         self.__CLIENTVERSION = __version__
         self.__CLIENTNAME = "Bedrock Solutions NtripClient/" + f"{self.__CLIENTVERSION}"
@@ -38,26 +53,25 @@ class NtripStream:
         self.rtcmFrameAligned = False
 
     async def openNtripConnection(self, casterUrl: str) -> bool:
-        """
-        Connects to a caster.
+        """Open a TCP (or TLS) connection to an NTRIP caster.
 
         Parameters
         ----------
         casterUrl : str
-            http[s]://caster.hostname.net:port.
+            Caster URL and port, e.g. ``http[s]://caster.hostname.net:port``.
+            The ``https`` scheme opens a TLS connection.
 
         Raises
         ------
         TimeoutError
-            DESCRIPTION.
+            If the connection attempt times out.
         OSError
-            DESCRIPTION.
+            If the connection cannot be established.
 
         Returns
         -------
         bool
-            DESCRIPTION.
-
+            ``True`` once the connection is open and ready to write.
         """
         self.casterUrl = urlsplit(casterUrl)
         try:
@@ -84,19 +98,14 @@ class NtripStream:
         return True
 
     def setRequestSourceTableHeader(self, casterUrl: str) -> None:
-        """
+        """Build the request header used to fetch a caster's source table.
 
+        The result is stored on ``self.ntripRequestHeader``.
 
         Parameters
         ----------
         casterUrl : str
-            DESCRIPTION.
-
-        Returns
-        -------
-        None
-            DESCRIPTION.
-
+            Caster URL and port, e.g. ``http[s]://caster.hostname.net:port``.
         """
         self.casterUrl = urlsplit(casterUrl)
         timestamp = strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
@@ -119,29 +128,23 @@ class NtripStream:
         ntripPassword: str = None,
         nmeaString: str = None,
     ) -> None:
-        """
+        """Build the request header used to consume an NTRIP stream (client).
 
+        The result is stored on ``self.ntripRequestHeader``.
 
         Parameters
         ----------
         casterUrl : str
-            DESCRIPTION.
+            Caster URL and port, e.g. ``http[s]://caster.hostname.net:port``.
         ntripMountPoint : str
-            DESCRIPTION.
+            Mountpoint name, without the leading ``/``.
         ntripUser : str, optional
-            DESCRIPTION. The default is None.
+            Username for basic authentication. The default is None.
         ntripPassword : str, optional
-            DESCRIPTION. The default is None.
+            Password for basic authentication. The default is None.
         nmeaString : str, optional
-            DESCRIPTION. The default is None.
-         : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None
-            DESCRIPTION.
-
+            NMEA GGA sentence sent to request a virtual reference station.
+            The default is None.
         """
         self.casterUrl = urlsplit(casterUrl)
         self.ntripMountPoint = ntripMountPoint
@@ -174,29 +177,25 @@ class NtripStream:
         ntripPassword: str = None,
         ntripVersion: int = 2,
     ) -> None:
-        """
+        """Build the request header used to publish a stream (server).
 
+        The result is stored on ``self.ntripRequestHeader``. NTRIP version 2
+        uses an HTTP ``POST`` with basic authentication; version 1 uses the
+        legacy ``SOURCE`` request with the password only.
 
         Parameters
         ----------
         casterUrl : str
-            DESCRIPTION.
+            Caster URL and port, e.g. ``http[s]://caster.hostname.net:port``.
         ntripMountPoint : str
-            DESCRIPTION.
+            Mountpoint name, without the leading ``/``.
         ntripUser : str, optional
-            DESCRIPTION. The default is None.
+            Username for basic authentication (NTRIP 2 only). The default
+            is None.
         ntripPassword : str, optional
-            DESCRIPTION. The default is None.
+            Password / upload token. The default is None.
         ntripVersion : int, optional
-            DESCRIPTION. The default is 2.
-         : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None
-            DESCRIPTION.
-
+            NTRIP protocol version, 1 or 2. The default is 2.
         """
         self.casterUrl = urlsplit(casterUrl)
         if ntripVersion == 1:
@@ -233,20 +232,19 @@ class NtripStream:
                 "\r\n"
             ).encode("ISO-8859-1")
 
-    def getHeaderStrings(self, rawHeader: Union[bytes, list]) -> str:
-        """
-
+    def getHeaderStrings(self, rawHeader: Union[bytes, list]) -> list:
+        """Decode a raw header into a list of stripped ISO-8859-1 lines.
 
         Parameters
         ----------
-        rawHeader : [bytes, list]
-            DESCRIPTION.
+        rawHeader : bytes or list of bytes
+            Either a single ``bytes`` blob (split on CRLF) or a list of raw
+            header line ``bytes``.
 
         Returns
         -------
-        str
-            DESCRIPTION.
-
+        list of str
+            The decoded header lines with trailing whitespace removed.
         """
         if isinstance(rawHeader, bytes):
             headerStrings = rawHeader.decode("ISO-8859-1").split("\r\n")
@@ -257,19 +255,15 @@ class NtripStream:
         return headerStrings
 
     async def getNtripResponseHeader(self) -> None:
-        """
+        """Read and parse the caster's HTTP response header.
 
+        Populates ``self.ntripResponseHeader``, ``self.ntripStreamChunked`` and
+        ``self.ntripResponseStatusCode``.
 
         Raises
         ------
         ConnectionError
-            DESCRIPTION.
-
-        Returns
-        -------
-        None
-            DESCRIPTION.
-
+            If the connection fails while reading the response header.
         """
         self.ntripResponseHeader = []
         ntripResponseHeaderTimestamp = []
@@ -301,19 +295,18 @@ class NtripStream:
             self.ntripResponseStatusCode = 0
 
     def ntripResponseStatusOk(self) -> bool:
-        """
-
+        """Check whether the caster returned HTTP status 200.
 
         Raises
         ------
         ConnectionError
-            DESCRIPTION.
+            If the status code is not 200; the writer is closed first and the
+            response header lines are logged.
 
         Returns
         -------
         bool
-            DESCRIPTION.
-
+            ``True`` when the caster responded with status 200.
         """
         if self.ntripResponseStatusCode == "200":
             self.rtcmFramePreample = False
@@ -332,14 +325,10 @@ class NtripStream:
             )
 
     async def sendRequestHeader(self) -> None:
-        """
+        """Send the prepared request header and read the caster's response.
 
-
-        Returns
-        -------
-        None
-            DESCRIPTION.
-
+        Writes ``self.ntripRequestHeader`` to the caster, then reads the
+        response header and validates the status code.
         """
         self.ntripWriter.write(self.ntripRequestHeader)
         await self.ntripWriter.drain()
@@ -352,24 +341,22 @@ class NtripStream:
                 logging.debug(f"TCP response: {line}")
 
     async def requestSourcetable(self, casterUrl: str) -> list:
-        """
-
+        """Connect to a caster and return its full source table.
 
         Parameters
         ----------
         casterUrl : str
-            DESCRIPTION.
+            Caster URL and port, e.g. ``http[s]://caster.hostname.net:port``.
 
         Raises
         ------
         ConnectionError
-            DESCRIPTION.
+            If the connection fails while receiving the source table.
 
         Returns
         -------
-        list
-            DESCRIPTION.
-
+        list of str
+            The source table lines, ending with ``ENDSOURCETABLE``.
         """
         await self.openNtripConnection(casterUrl)
         self.setRequestSourceTableHeader(casterUrl)
@@ -403,29 +390,21 @@ class NtripStream:
         passwd: str = None,
         ntripVersion: int = 2,
     ) -> None:
-        """
-
+        """Connect to a caster and send a server (upload) request header.
 
         Parameters
         ----------
         casterUrl : str
-            DESCRIPTION.
+            Caster URL and port, e.g. ``http[s]://caster.hostname.net:port``.
         mountPoint : str
-            DESCRIPTION.
+            Mountpoint name to publish to, without the leading ``/``.
         user : str, optional
-            DESCRIPTION. The default is None.
+            Username for basic authentication (NTRIP 2 only). The default
+            is None.
         passwd : str, optional
-            DESCRIPTION. The default is None.
+            Password / upload token. The default is None.
         ntripVersion : int, optional
-            DESCRIPTION. The default is 2.
-         : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None
-            DESCRIPTION.
-
+            NTRIP protocol version, 1 or 2. The default is 2.
         """
         self.ntripVersion = ntripVersion
         self.ntripMountPoint = mountPoint
@@ -438,25 +417,18 @@ class NtripStream:
     async def requestNtripStream(
         self, casterUrl: str, mountPoint: str, user: str = None, passwd: str = None
     ) -> None:
-        """
-
+        """Connect to a caster and send a client (stream) request header.
 
         Parameters
         ----------
         casterUrl : str
-            DESCRIPTION.
+            Caster URL and port, e.g. ``http[s]://caster.hostname.net:port``.
         mountPoint : str
-            DESCRIPTION.
+            Mountpoint name to consume, without the leading ``/``.
         user : str, optional
-            DESCRIPTION. The default is None.
+            Username for basic authentication. The default is None.
         passwd : str, optional
-            DESCRIPTION. The default is None.
-
-        Returns
-        -------
-        None
-            DESCRIPTION.
-
+            Password for basic authentication. The default is None.
         """
         self.ntripMountPoint = mountPoint
         await self.openNtripConnection(casterUrl)
@@ -466,10 +438,37 @@ class NtripStream:
         await self.sendRequestHeader()
 
     async def sendRtcmFrame(self, rtcmFrame: BitStream) -> None:
+        """Send a single RTCM 3 frame to the caster.
+
+        Parameters
+        ----------
+        rtcmFrame : bitstring.BitStream
+            A complete RTCM 3 frame (preamble, payload and CRC). It is
+            converted to bytes before being written.
+        """
         self.ntripWriter.write(rtcmFrame.tobytes())
         await self.ntripWriter.drain()
 
     async def getRtcmFrame(self):
+        """Read the next complete, CRC-validated RTCM 3 frame from the stream.
+
+        Data is buffered until a frame preamble is found and the frame is
+        CRC-24Q verified; on a CRC mismatch the buffer is realigned and the
+        search continues.
+
+        Raises
+        ------
+        ConnectionError
+            If the connection fails while receiving data.
+        IOError
+            If a chunk is malformed or incomplete.
+
+        Returns
+        -------
+        tuple of (bitstring.BitStream, float)
+            The validated RTCM 3 frame and the Unix timestamp at which it was
+            received.
+        """
         rtcm3FramePreample = Bits(bin="0b11010011")
         rtcm3FrameHeaderFormat = "bin:8, pad:6, uint:10"
         rtcmFrameComplete = False

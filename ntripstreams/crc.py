@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
+"""Checksum helpers for NTRIP / RTCM data.
 
-http://ross.net/crc/download/crc_v3.txt
+Provides the NMEA 0183 XOR checksum and the Qualcomm CRC-24Q used by RTCM 3,
+plus a helper to generate the CRC-24Q lookup table.
+
+Reference: http://ross.net/crc/download/crc_v3.txt
 
 @author: Lars Stenseng
 @mail: lars@stenseng.net
@@ -12,6 +15,19 @@ from bitstring import BitStream
 
 
 def crcNmea(data):
+    """Calculate the NMEA 0183 checksum (XOR of all data bytes).
+
+    Parameters
+    ----------
+    data : bitstring.BitStream
+        The bytes between ``$`` and ``*`` of an NMEA sentence. Must be a whole
+        number of bytes.
+
+    Returns
+    -------
+    bitstring.BitStream
+        The 8-bit checksum, matching the two hex digits after ``*``.
+    """
     crc = BitStream("0x00")
     length = int(data.length / 8)
     for _ in range(length):
@@ -20,13 +36,18 @@ def crcNmea(data):
 
 
 def crc24q(data):
-    """
-    Calculate Qualcomm 24 bit cyclic redundancy check
+    """Calculate the Qualcomm 24-bit CRC (CRC-24Q) used by RTCM 3.
+
+    Parameters
+    ----------
+    data : bitstring.BitStream
+        The data to check-sum (an RTCM 3 frame excluding its 24-bit CRC). Must
+        be a whole number of bytes.
 
     Returns
     -------
-    Qualcomm 24 bit crc remainder (checksum)
-
+    int
+        The 24-bit CRC remainder (checksum).
     """
 
     crclut = [
