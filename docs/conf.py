@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "ntripstreams"
-copyright = "2021, Lars Stenseng"
+copyright = "2021-2026, Lars Stenseng"
 author = "Lars Stenseng"
 
 # The short X.Y version
@@ -43,10 +43,15 @@ release = version
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.intersphinx",
     "sphinx_click.ext",
     "sphinx.ext.graphviz",
     "sphinxcontrib.programoutput",
 ]
+
+# Cross-reference the Python standard library docs.
+intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -72,8 +77,10 @@ language = "en"
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = None
+# The name of the Pygments (syntax highlighting) style to use, with a separate
+# style for Furo's dark mode.
+pygments_style = "friendly"
+pygments_dark_style = "monokai"
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -81,24 +88,49 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-#
-# html_theme_options = {}
+# Shown in the browser tab / sidebar header.
+html_title = f"ntripstreams {version}"
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
-
-html_context = {
-    "css_files": [
-        "_static/theme_overrides.css",
-    ],  # override wide tables in RTD theme
+# Furo theme options: brand colours (light + dark) and a GitHub link.
+# https://pradyunsg.me/furo/customisation/
+html_theme_options = {
+    "sidebar_hide_name": False,
+    "light_css_variables": {
+        "color-brand-primary": "#1a6bb5",
+        "color-brand-content": "#1a6bb5",
+    },
+    "dark_css_variables": {
+        "color-brand-primary": "#5aa9e6",
+        "color-brand-content": "#5aa9e6",
+    },
+    "footer_icons": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/stenseng/ntripstreams",
+            "html": (
+                '<svg stroke="currentColor" fill="currentColor" '
+                'stroke-width="0" viewBox="0 0 16 16"><path fill-rule="evenodd" '
+                'd="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17'
+                ".55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23"
+                "-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82"
+                ".72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89"
+                "-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67"
+                "-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04"
+                " 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0"
+                ' 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01'
+                ' 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z">'
+                "</path></svg>"
+            ),
+            "class": "",
+        },
+    ],
 }
+
+# Custom static files (brand accent tweaks) copied after the theme's own.
+html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
