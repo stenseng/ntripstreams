@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
+"""Command line entry point for ntripstreams.
+
+Parses arguments (with ``NTRIP_*`` environment-variable fallbacks), then either
+prints a caster's source table, streams and logs RTCM 3 messages from one or
+more mountpoints, or prints a server request header. Installed as the
+``ntripstreams`` console script.
+
 @author: Lars Stenseng
 @mail: lars@stenseng.net
 """
@@ -32,11 +38,13 @@ def env_default(name: str) -> Optional[str]:
 
 
 def procSigint(signum: int, frame: Optional[FrameType]) -> None:
+    """Handle SIGINT: log a shutdown message and exit with status 3."""
     logging.warning("Received SIGINT. Shutting down, Adjø!")
     exit(3)
 
 
 def procSigterm(signum: int, frame: Optional[FrameType]) -> None:
+    """Handle SIGTERM: log a shutdown message and exit with status 4."""
     logging.warning("Received SIGTERM. Shutting down, Adjø!")
     exit(4)
 
@@ -49,29 +57,27 @@ async def procRtcmStream(
     fail: int = 0,
     retry: int = 5,
 ) -> None:
-    """
+    """Stream a mountpoint and log decoded RTCM 3 messages, reconnecting on error.
 
+    Runs until the stream ends or a frame cannot be decoded. Connection and I/O
+    errors trigger reconnection with a backoff that grows once ``fail`` reaches
+    ``retry`` (capped at 300 seconds).
 
     Parameters
     ----------
     url : str
-        DESCRIPTION.
+        Caster URL and port, e.g. ``http[s]://caster.hostname.net:port``.
     mountPoint : str
-        DESCRIPTION.
+        Mountpoint name to consume, without the leading ``/``.
     user : str, optional
-        DESCRIPTION. The default is None.
+        Username for basic authentication. The default is None.
     passwd : str, optional
-        DESCRIPTION. The default is None.
+        Password for basic authentication. The default is None.
     fail : int, optional
-        DESCRIPTION. The default is 0.
+        Initial consecutive-failure count, used for the reconnect backoff.
+        The default is 0.
     retry : int, optional
-        DESCRIPTION. The default is 5.
-
-    Returns
-    -------
-    None
-        DESCRIPTION.
-
+        Failure count above which the longer backoff applies. The default is 5.
     """
     ntripstream = NtripStream()
     rtcmMessage = Rtcm3()
@@ -135,25 +141,18 @@ async def procRtcmStream(
 
 
 async def rtcmStreamTasks(url: str, mountPoints: str, user: str, passwd: str) -> None:
-    """
-
+    """Stream several mountpoints concurrently until all tasks finish.
 
     Parameters
     ----------
     url : str
-        DESCRIPTION.
-    mountPoints : str
-        DESCRIPTION.
+        Caster URL and port, e.g. ``http[s]://caster.hostname.net:port``.
+    mountPoints : list of str
+        Mountpoint names to stream concurrently, each without a leading ``/``.
     user : str
-        DESCRIPTION.
+        Username for basic authentication.
     passwd : str
-        DESCRIPTION.
-
-    Returns
-    -------
-    None
-        DESCRIPTION.
-
+        Password for basic authentication.
     """
     tasks = {}
     for mountPoint in mountPoints:
@@ -237,6 +236,13 @@ def parse_args(argv: Optional[list] = None) -> argparse.Namespace:
 
 
 def main() -> None:
+    """Run the ntripstreams command line tool.
+
+    Installs the signal handlers, parses arguments (including ``NTRIP_*``
+    environment fallbacks), configures logging, and dispatches to the
+    requested action: print the source table (no mountpoint), print a server
+    request header (``--server``), or stream the given mountpoints.
+    """
     signal(SIGINT, procSigint)
     signal(SIGTERM, procSigterm)
     args = parse_args()

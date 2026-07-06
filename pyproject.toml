@@ -38,7 +38,7 @@ docs = [
     "sphinx",
     "sphinx-click",
     "sphinxcontrib-programoutput",
-    "sphinx-rtd-theme",
+    "furo",
 ]
 dev = ["black", "ruff", "ntripstreams[test,docs]"]
 

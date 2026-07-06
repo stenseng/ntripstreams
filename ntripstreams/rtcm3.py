@@ -28,6 +28,15 @@ def _readfmt(fmt: str) -> str:
 
 
 class Rtcm3:
+    """Encode and decode RTCM 3 messages.
+
+    Provides frame-level helpers (:meth:`decodeRtcmFrame`,
+    :meth:`encodeRtcmFrame`) that handle the preamble and CRC, message-level
+    decoding of the legacy GPS/GLONASS observables (1001-1004, 1009-1012) and
+    the Multiple Signal Messages (MSM, 1071-1127), and lookups for message
+    descriptions, GNSS constellations and MSM signal types.
+    """
+
     def __init__(self):
         pass
 
@@ -40,14 +49,53 @@ class Rtcm3:
         return message.unpack(_readfmt(fmt))
 
     def mjd(self, unixTimestamp):
+        """Convert a Unix timestamp to a Modified Julian Date (integer day).
+
+        Parameters
+        ----------
+        unixTimestamp : float
+            Seconds since the Unix epoch.
+
+        Returns
+        -------
+        int
+            The Modified Julian Date (whole days).
+        """
         mjd = int(unixTimestamp / 86400.0 + 40587.0)
         return mjd
 
     def msmConstellation(self, messageType: int):
+        """Return the GNSS constellation for an MSM message type.
+
+        Parameters
+        ----------
+        messageType : int
+            An MSM message number in the range 1071-1127.
+
+        Returns
+        -------
+        str
+            Constellation name, e.g. ``"GPS"``, ``"GLONASS"``, ``"GALILEO"``,
+            ``"SBAS"``, ``"QZSS"`` or ``"BEIDOU"``.
+        """
         constellation = self.__msmConstellations[int(messageType / 10) % 100]
         return constellation
 
     def constellation(self, messageType: int):
+        """Return the GNSS constellation for any supported message type.
+
+        Parameters
+        ----------
+        messageType : int
+            An RTCM 3 message number.
+
+        Returns
+        -------
+        str
+            Constellation name for legacy GPS (1001-1004), GLONASS
+            (1009-1012) and MSM (1071-1127) messages; ``"GNSS"`` for any other
+            message type.
+        """
         if messageType >= 1001 and messageType <= 1004:
             constellation = self.__msmConstellations[7]
         elif messageType >= 1009 and messageType <= 1012:
@@ -59,6 +107,22 @@ class Rtcm3:
         return constellation
 
     def msmSignalTypes(self, messageType: int, msmSignals):
+        """Resolve the signal-type codes selected by an MSM signal mask.
+
+        Parameters
+        ----------
+        messageType : int
+            An MSM message number in the range 1071-1127.
+        msmSignals : str
+            The 32-bit GNSS signal mask as a string of ``"0"``/``"1"``
+            characters (the ``gnssSignalMask`` header field).
+
+        Returns
+        -------
+        list of str
+            RINEX-style signal codes (e.g. ``"L1C"``, ``"L2W"``) for each bit
+            set in the mask, in mask order.
+        """
         signals = [
             self.__msmSignalTypes[self.msmConstellation(messageType)][i]
             for i, mask in enumerate(msmSignals)
@@ -67,16 +131,68 @@ class Rtcm3:
         return signals
 
     def encodeRtcmFrame(self, messageType: int, dataDict):
+        """Encode an RTCM 3 message into a frame.
+
+        .. note::
+            Currently only message type 1029 is implemented, and the returned
+            frame does not yet include the preamble, length and CRC wrapper.
+
+        Parameters
+        ----------
+        messageType : int
+            RTCM 3 message number to encode.
+        dataDict : dict
+            Field values for the message; missing fields fall back to defaults.
+
+        Returns
+        -------
+        bitstring.BitStream
+            The encoded message.
+        """
         message = self.encodeRtcmMessage(messageType, dataDict)
         rtcmFrame = message
         return rtcmFrame
 
     def decodeRtcmFrame(self, rtcmFrame):
+        """Decode a complete RTCM 3 frame.
+
+        Strips the 24-bit header/preamble and the trailing 24-bit CRC, then
+        decodes the payload with :meth:`decodeRtcmMessage`.
+
+        Parameters
+        ----------
+        rtcmFrame : bitstring.BitStream
+            A complete, CRC-validated RTCM 3 frame.
+
+        Returns
+        -------
+        tuple of (int, list)
+            The message type and its decoded data; see
+            :meth:`decodeRtcmMessage` for the data layout.
+        """
         rtcmPayload = rtcmFrame[24:-24]
         messageType, data = self.decodeRtcmMessage(rtcmPayload)
         return messageType, data
 
     def encodeRtcmMessage(self, messageType: int, dataDict):
+        """Encode an RTCM 3 message payload.
+
+        .. note::
+            Only message type 1029 (Unicode Text String) is implemented;
+            other message types return ``None``.
+
+        Parameters
+        ----------
+        messageType : int
+            RTCM 3 message number to encode.
+        dataDict : dict
+            Field values for the message; missing fields fall back to defaults.
+
+        Returns
+        -------
+        bitstring.BitStream or None
+            The packed message payload, or ``None`` for unimplemented types.
+        """
         if messageType == 1029:
             utfStr = "Default string"
             default = {
@@ -95,6 +211,19 @@ class Rtcm3:
             return message
 
     def __decodeMsmHeader(self, message):
+        """Decode the common MSM header, including the satellite/cell masks.
+
+        Parameters
+        ----------
+        message : bitstring.BitStream
+            The message payload, positioned at the start of the header.
+
+        Returns
+        -------
+        tuple of (list, int, int, int)
+            The header fields, the number of satellites, the number of signals
+            and the number of cells (``numSats * numSignals`` selected cells).
+        """
         head = self._rl(message, self.__msgMsmHead)
         numSats = Bits(bin=head[9]).bin.count("1")
         numSignals = Bits(bin=head[10]).bin.count("1")
@@ -108,6 +237,27 @@ class Rtcm3:
         return head, numSats, numSignals, numCells
 
     def decodeRtcmMessage(self, message):
+        """Decode an RTCM 3 message payload (without preamble or CRC).
+
+        Fully decodes the legacy GPS/GLONASS observables (1001-1004,
+        1009-1012) and the Multiple Signal Messages (1071-1127). Other message
+        types are recognised but not field-decoded.
+
+        Parameters
+        ----------
+        message : bitstring.BitStream
+            The message payload (frame with the 24-bit header and 24-bit CRC
+            removed).
+
+        Returns
+        -------
+        tuple of (int, list)
+            ``(messageType, [head, satData, signalData])`` where ``head`` is
+            the list of decoded header fields (or the string
+            ``"Message type not implemented"``), and ``satData`` /
+            ``signalData`` are column-wise lists of the per-satellite and
+            per-signal fields (empty for non-observable messages).
+        """
         data = []
         head = []
         satData = []
@@ -205,6 +355,19 @@ class Rtcm3:
         return messageType, data
 
     def messageDescription(self, messageType: int):
+        """Return a human-readable description for an RTCM 3 message type.
+
+        Parameters
+        ----------
+        messageType : int
+            RTCM 3 message number.
+
+        Returns
+        -------
+        str
+            The message description, or a "currently not implemented" note for
+            unknown message types.
+        """
         if messageType in self.messageDescriptionText:
             return self.messageDescriptionText[messageType]
         else:
