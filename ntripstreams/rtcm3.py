@@ -543,10 +543,10 @@ class Rtcm3:
     __msg1011Head = "uint:12=1011, " + __msg1009_12Head
     __msg1012Head = "uint:12=1012, " + __msg1009_12Head
     __msg1009Obs = (
-        "uint:6=satId, bool=codeFlag, uint:5=freqChannelnum, uint:24=l1Pseudorange, "
+        "uint:6=satId, bool=codeFlag, uint:5=freqChannelnum, uint:25=l1Pseudorange, "
         "int:20=l1PhaserangeL1PseudorangeDiff, uint:7=l1LockTimeIndicator"
     )
-    __msg1010Obs = __msg1009Obs + ", uint:8=l1PseudorangeAmbiguity, uint:8=l1CNR"
+    __msg1010Obs = __msg1009Obs + ", uint:7=l1PseudorangeAmbiguity, uint:8=l1CNR"
     __msg1011Obs = (
         __msg1009Obs + ", uint:2=l2CodeFlag, int:14=l2L1PseudorangeDiff,"
         "int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator"
