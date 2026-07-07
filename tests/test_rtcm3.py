@@ -235,6 +235,86 @@ class TestEphemerisMessages(unittest.TestCase):
         self.assertGreater(checked, 0)  # 1042 and 1046 are in the captures
 
 
+class TestSsrMessages(unittest.TestCase):
+    """SSR messages 1057-1068 (spec bit totals + synthetic round-trip).
+
+    No SSR frames appear in the captures, so decoding is verified for
+    self-consistency: header/satellite widths match the 10403.3 tables, and
+    synthetic payloads decode with the right satellite/code counts and consume
+    exactly.
+    """
+
+    HEADER_BITS = {
+        1057: 68,
+        1058: 67,
+        1059: 67,
+        1060: 68,
+        1061: 67,
+        1062: 67,
+        1063: 65,
+        1064: 64,
+        1065: 64,
+        1066: 65,
+        1067: 64,
+        1068: 64,
+    }
+    SAT_BITS = {
+        1057: 135,
+        1058: 76,
+        1060: 205,
+        1061: 12,
+        1062: 28,
+        1063: 134,
+        1064: 75,
+        1066: 204,
+        1067: 11,
+        1068: 27,
+    }
+
+    def test_header_and_sat_bit_totals(self):
+        ssr = Rtcm3._Rtcm3__ssrMessages
+        for mt, spec in ssr.items():
+            self.assertEqual(format_bits(spec["header"]), self.HEADER_BITS[mt])
+            if "sat" in spec:
+                self.assertEqual(format_bits(spec["sat"]), self.SAT_BITS[mt])
+            else:  # code bias: code block is signal(5) + bias(14)
+                self.assertEqual(format_bits(spec["code"]), 19)
+
+    def test_synthetic_roundtrip(self):
+        ssr = Rtcm3._Rtcm3__ssrMessages
+        rtcm = Rtcm3()
+
+        def zeros(n):
+            return BitStream(uint=0, length=n) if n else BitStream()
+
+        def build(mt, num_sats, num_codes=0):
+            spec = ssr[mt]
+            hbits = format_bits(spec["header"])
+            b = zeros(hbits)
+            b[0:12] = BitStream(uint=mt, length=12)
+            b[hbits - 6 : hbits] = BitStream(uint=num_sats, length=6)  # DF387
+            for _ in range(num_sats):
+                if "code" in spec:
+                    b += zeros(int(spec["satId"].split(":")[1]))
+                    b += BitStream(uint=num_codes, length=5)
+                    b += zeros(format_bits(spec["code"]) * num_codes)
+                else:
+                    b += zeros(format_bits(spec["sat"]))
+            return b
+
+        for mt in ssr:
+            code_counts = (0, 3) if "code" in ssr[mt] else (0,)
+            for num_codes in code_counts:
+                for num_sats in (0, 1, 4):
+                    payload = build(mt, num_sats, num_codes)
+                    total = payload.len
+                    payload.pos = 0
+                    mtype, data = rtcm.decodeRtcmMessage(payload)
+                    self.assertEqual(mtype, mt)
+                    self.assertEqual(len(data[1]), num_sats)
+                    self.assertEqual(payload.pos, total)  # consumed exactly
+
+
 class TestLegacyRecordWidths(unittest.TestCase):
     """Per-satellite record widths must match the RTCM 10403.3 message tables.
 

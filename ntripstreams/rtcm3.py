@@ -74,6 +74,33 @@ class Rtcm3:
                 message.pos += bits
         return head
 
+    def _decodeSsr(self, message, messageType):
+        """Decode an SSR message (1057-1068): header + per-satellite blocks.
+
+        Returns
+        -------
+        tuple of (list, list)
+            The header fields and a list of per-satellite blocks. The header's
+            last field is DF387 (number of satellites). For the code-bias
+            messages (1059, 1065) each satellite block is
+            ``[satId, numCodeBiases, signal, bias, signal, bias, ...]``.
+        """
+        spec = self.__ssrMessages[messageType]
+        head = self._rl(message, spec["header"])
+        numSats = head[-1]  # DF387 No. of Satellites
+        satData = []
+        for _ in range(numSats):
+            if "code" in spec:
+                satId = message.read(spec["satId"])
+                numCodes = message.read("uint:5")
+                row = [satId, numCodes]
+                for _ in range(numCodes):
+                    row += self._rl(message, spec["code"])
+                satData.append(row)
+            else:
+                satData.append(self._rl(message, spec["sat"]))
+        return head, satData
+
     def mjd(self, unixTimestamp):
         """Convert a Unix timestamp to a Modified Julian Date (integer day).
 
@@ -415,6 +442,8 @@ class Rtcm3:
             head = self._rl(message, self.__ephemerisFormats[messageType])
         elif messageType == 1020:
             head = self._decode1020(message)
+        elif messageType in self.__ssrMessages:
+            head, satData = self._decodeSsr(message, messageType)
 
         else:
             head = "Message type not implemented"
@@ -717,6 +746,96 @@ class Rtcm3:
         (1, "b"),
         (7, "r"),
     ]
+
+    # SSR messages 1057-1068 (RTCM 10403.3 Tables 3.5-37..62). The header
+    # ends with DF387 No. of Satellites; one satellite block follows per
+    # satellite. Code-bias messages (1059, 1065) nest a code block per sat.
+    __ssrMessages = {
+        1057: {
+            "header": (
+                "uint:12, uint:20, uint:4, bool, bool, uint:4, uint:16, uint:4, "
+                "uint:6"
+            ),
+            "sat": ("uint:6, uint:8, int:22, int:20, int:20, int:21, int:19, int:19"),
+        },
+        1058: {
+            "header": (
+                "uint:12, uint:20, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+            ),
+            "sat": ("uint:6, int:22, int:21, int:27"),
+        },
+        1059: {
+            "header": (
+                "uint:12, uint:20, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+            ),
+            "satId": "uint:6",
+            "code": "uint:5, int:14",
+        },
+        1060: {
+            "header": (
+                "uint:12, uint:20, uint:4, bool, bool, uint:4, uint:16, uint:4, "
+                "uint:6"
+            ),
+            "sat": (
+                "uint:6, uint:8, int:22, int:20, int:20, int:21, int:19, int:19, "
+                "int:22, int:21, int:27"
+            ),
+        },
+        1061: {
+            "header": (
+                "uint:12, uint:20, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+            ),
+            "sat": ("uint:6, uint:6"),
+        },
+        1062: {
+            "header": (
+                "uint:12, uint:20, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+            ),
+            "sat": ("uint:6, int:22"),
+        },
+        1063: {
+            "header": (
+                "uint:12, uint:17, uint:4, bool, bool, uint:4, uint:16, uint:4, "
+                "uint:6"
+            ),
+            "sat": ("uint:5, uint:8, int:22, int:20, int:20, int:21, int:19, int:19"),
+        },
+        1064: {
+            "header": (
+                "uint:12, uint:17, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+            ),
+            "sat": ("uint:5, int:22, int:21, int:27"),
+        },
+        1065: {
+            "header": (
+                "uint:12, uint:17, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+            ),
+            "satId": "uint:5",
+            "code": "uint:5, int:14",
+        },
+        1066: {
+            "header": (
+                "uint:12, uint:17, uint:4, bool, bool, uint:4, uint:16, uint:4, "
+                "uint:6"
+            ),
+            "sat": (
+                "uint:5, uint:8, int:22, int:20, int:20, int:21, int:19, int:19, "
+                "int:22, int:21, int:27"
+            ),
+        },
+        1067: {
+            "header": (
+                "uint:12, uint:17, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+            ),
+            "sat": ("uint:5, uint:6"),
+        },
+        1068: {
+            "header": (
+                "uint:12, uint:17, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+            ),
+            "sat": ("uint:5, int:22"),
+        },
+    }
 
     # MSM messages
     __msgMsmHead = (
