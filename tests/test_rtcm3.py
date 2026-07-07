@@ -216,7 +216,7 @@ class TestEphemerisMessages(unittest.TestCase):
             self.assertEqual(format_bits(fmt), self.SPEC_BITS[mt], f"{mt} width")
 
     def test_glonass_1020_field_widths(self):
-        total = sum(bits for bits, _ in Rtcm3._Rtcm3__msg1020Fields)
+        total = sum(bits for bits, _kind, _name in Rtcm3._Rtcm3__msg1020Fields)
         self.assertEqual(total, self.SPEC_BITS[1020])
 
     def test_captured_ephemeris_frames_fully_consume(self):
@@ -295,7 +295,7 @@ class TestSsrMessages(unittest.TestCase):
             b[hbits - 6 : hbits] = BitStream(uint=num_sats, length=6)  # DF387
             for _ in range(num_sats):
                 if "code" in spec:
-                    b += zeros(int(spec["satId"].split(":")[1]))
+                    b += zeros(int(_readfmt(spec["satId"]).split(":")[1]))
                     b += BitStream(uint=num_codes, length=5)
                     b += zeros(format_bits(spec["code"]) * num_codes)
                 else:
@@ -361,9 +361,8 @@ class TestNetworkMessages(unittest.TestCase):
 
         for mt, spec in net.items():
             hbits = format_bits(spec["header"])
-            count_width = int(
-                spec["header"].replace(" ", "").split(",")[-1].split(":")[1]
-            )
+            last = _readfmt(spec["header"]).replace(" ", "").split(",")[-1]
+            count_width = int(last.split(":")[1])
             for num_sats in (0, 1, 5):
                 b = zeros(hbits)
                 b[0:12] = BitStream(uint=mt, length=12)

@@ -73,7 +73,7 @@ class Rtcm3:
     def _decode1020(self, message):
         """Decode a GLONASS ephemeris (1020), handling sign-magnitude fields."""
         head = []
-        for bits, kind in self.__msg1020Fields:
+        for bits, kind, _name in self.__msg1020Fields:
             if kind == "b":
                 head.append(message.read("bool"))
             elif kind == "u":
@@ -101,7 +101,7 @@ class Rtcm3:
         satData = []
         for _ in range(numSats):
             if "code" in spec:
-                satId = message.read(spec["satId"])
+                satId = message.read(_readfmt(spec["satId"]))
                 numCodes = message.read("uint:5")
                 row = [satId, numCodes]
                 for _ in range(numCodes):
@@ -418,18 +418,26 @@ class Rtcm3:
         elif messageType == 1006:
             head = self._rl(message, self.__msg1006)
         elif messageType == 1007:
-            head = self._rl(message, "uint:12, uint:12, uint:8")
+            head = self._rl(
+                message,
+                "uint:12=messageNumber, uint:12=refStationId, "
+                "uint:8=descriptorCounter",
+            )
             head.append(self._readCountedString(message, head[2]))
             head.append(message.read("uint:8"))
         elif messageType == 1008:
-            head = self._rl(message, "uint:12, uint:12, uint:8")
+            head = self._rl(
+                message,
+                "uint:12=messageNumber, uint:12=refStationId, "
+                "uint:8=descriptorCounter",
+            )
             head.append(self._readCountedString(message, head[2]))
             head.append(message.read("uint:8"))
             serialCount = message.read("uint:8")
             head.append(serialCount)
             head.append(self._readCountedString(message, serialCount))
         elif messageType == 1033:
-            head = self._rl(message, "uint:12, uint:12")
+            head = self._rl(message, "uint:12=messageNumber, uint:12=refStationId")
             for withSetupId in (True, False, False, False, False):
                 count = message.read("uint:8")
                 head.append(count)
@@ -438,12 +446,25 @@ class Rtcm3:
                     head.append(message.read("uint:8"))
         elif messageType == 1013:
             head = self._rl(
-                message, "uint:12, uint:12, uint:16, uint:17, uint:5, uint:8"
+                message,
+                "uint:12=messageNumber, uint:12=refStationId, uint:16=mjd, "
+                "uint:17=secondsOfDay, uint:5=messageAnnouncements, "
+                "uint:8=leapSeconds",
             )
             for _ in range(head[4]):
-                satData.append(self._rl(message, "uint:12, bool, uint:16"))
+                satData.append(
+                    self._rl(
+                        message,
+                        "uint:12=messageId, bool=syncFlag, "
+                        "uint:16=transmissionInterval",
+                    )
+                )
         elif messageType == 1230:
-            head = self._rl(message, "uint:12, uint:12, bool, pad:3, bin:4")
+            head = self._rl(
+                message,
+                "uint:12=messageNumber, uint:12=refStationId, "
+                "bool=codePhaseBiasIndicator, pad:3, bin:4=fdmaSignalMask",
+            )
             for mask in head[3]:
                 if mask == "1":
                     satData.append(message.read("int:16"))
@@ -690,34 +711,54 @@ class Rtcm3:
     # Values are positional; see the cited tables for field names/scales.
     __ephemerisFormats = {
         1019: (
-            "uint:12, uint:6, uint:10, uint:4, uint:2, int:14, uint:8, uint:16, "
-            "int:8, int:16, int:22, uint:10, int:16, int:16, int:32, int:16, "
-            "uint:32, int:16, uint:32, uint:16, int:16, int:32, int:16, int:32, "
-            "int:16, int:32, int:24, int:8, uint:6, bool, bool"
+            "uint:12=messageNumber, uint:6=satelliteId, uint:10=weekNumber, "
+            "uint:4=svAccuracy, uint:2=codeOnL2, int:14=idot, uint:8=iode, "
+            "uint:16=toc, int:8=af2, int:16=af1, int:22=af0, uint:10=iodc, "
+            "int:16=crs, int:16=deltaN, int:32=m0, int:16=cuc, "
+            "uint:32=eccentricity, int:16=cus, uint:32=sqrtA, uint:16=toe, "
+            "int:16=cic, int:32=omega0, int:16=cis, int:32=i0, int:16=crc, "
+            "int:32=argumentOfPerigee, int:24=omegaDot, int:8=tgd, "
+            "uint:6=svHealth, bool=l2PDataFlag, bool=fitInterval"
         ),
         1042: (
-            "uint:12, uint:6, uint:13, uint:4, int:14, uint:5, uint:17, int:11, "
-            "int:22, int:24, uint:5, int:18, int:16, int:32, int:18, uint:32, "
-            "int:18, uint:32, uint:17, int:18, int:32, int:18, int:32, int:18, "
-            "int:32, int:24, int:10, int:10, bool"
+            "uint:12=messageNumber, uint:6=satelliteId, uint:13=weekNumber, "
+            "uint:4=svUrai, int:14=idot, uint:5=aode, uint:17=toc, int:11=a2, "
+            "int:22=a1, int:24=a0, uint:5=aodc, int:18=crs, int:16=deltaN, "
+            "int:32=m0, int:18=cuc, uint:32=eccentricity, int:18=cus, "
+            "uint:32=sqrtA, uint:17=toe, int:18=cic, int:32=omega0, int:18=cis, "
+            "int:32=i0, int:18=crc, int:32=argumentOfPerigee, int:24=omegaDot, "
+            "int:10=tgd1, int:10=tgd2, bool=svHealth"
         ),
         1044: (
-            "uint:12, uint:4, uint:16, int:8, int:16, int:22, uint:8, int:16, "
-            "int:16, int:32, int:16, uint:32, int:16, uint:32, uint:16, int:16, "
-            "int:32, int:16, int:32, int:16, int:32, int:24, int:14, uint:2, "
-            "uint:10, uint:4, uint:6, int:8, uint:10, bool"
+            "uint:12=messageNumber, uint:4=satelliteId, uint:16=toc, int:8=af2, "
+            "int:16=af1, int:22=af0, uint:8=iode, int:16=crs, int:16=deltaN, "
+            "int:32=m0, int:16=cuc, uint:32=eccentricity, int:16=cus, "
+            "uint:32=sqrtA, uint:16=toe, int:16=cic, int:32=omega0, int:16=cis, "
+            "int:32=i0, int:16=crc, int:32=argumentOfPerigee, int:24=omegaDot, "
+            "int:14=idot, uint:2=codesOnL2Channel, uint:10=weekNumber, "
+            "uint:4=ura, uint:6=svHealth, int:8=tgd, uint:10=iodc, "
+            "bool=fitInterval"
         ),
         1045: (
-            "uint:12, uint:6, uint:12, uint:10, uint:8, int:14, uint:14, int:6, "
-            "int:21, int:31, int:16, int:16, int:32, int:16, uint:32, int:16, "
-            "uint:32, uint:14, int:16, int:32, int:16, int:32, int:16, int:32, "
-            "int:24, int:10, uint:2, bool, uint:7"
+            "uint:12=messageNumber, uint:6=satelliteId, uint:12=weekNumber, "
+            "uint:10=iodnav, uint:8=sisa, int:14=idot, uint:14=toc, int:6=af2, "
+            "int:21=af1, int:31=af0, int:16=crs, int:16=deltaN, int:32=m0, "
+            "int:16=cuc, uint:32=eccentricity, int:16=cus, uint:32=sqrtA, "
+            "uint:14=toe, int:16=cic, int:32=omega0, int:16=cis, int:32=i0, "
+            "int:16=crc, int:32=argumentOfPerigee, int:24=omegaDot, "
+            "int:10=bgdE5aE1, uint:2=openServiceHealth, bool=openServiceValidity, "
+            "uint:7=reserved"
         ),
         1046: (
-            "uint:12, uint:6, uint:12, uint:10, uint:8, int:14, uint:14, int:6, "
-            "int:21, int:31, int:16, int:16, int:32, int:16, uint:32, int:16, "
-            "uint:32, uint:14, int:16, int:32, int:16, int:32, int:16, int:32, "
-            "int:24, int:10, int:10, uint:2, bool, uint:2, bool, uint:2"
+            "uint:12=messageNumber, uint:6=satelliteId, uint:12=weekNumber, "
+            "uint:10=iodnav, uint:8=sisa, int:14=idot, uint:14=toc, int:6=af2, "
+            "int:21=af1, int:31=af0, int:16=crs, int:16=deltaN, int:32=m0, "
+            "int:16=cuc, uint:32=eccentricity, int:16=cus, uint:32=sqrtA, "
+            "uint:14=toe, int:16=cic, int:32=omega0, int:16=cis, int:32=i0, "
+            "int:16=crc, int:32=argumentOfPerigee, int:24=omegaDot, "
+            "int:10=bgdE5aE1, int:10=bgdE5bE1, uint:2=e5bHealth, "
+            "bool=e5bValidity, uint:2=e1bHealth, bool=e1bValidity, "
+            "uint:2=reserved"
         ),
     }
 
@@ -725,43 +766,43 @@ class Rtcm3:
     # 'u' uint, 's' sign-magnitude int (GLONASS uses intS), 'b' bool,
     # 'r' reserved (skipped). bitstring has no native sign-magnitude type.
     __msg1020Fields = [
-        (12, "u"),
-        (6, "u"),
-        (5, "u"),
-        (1, "b"),
-        (1, "b"),
-        (2, "u"),
-        (12, "u"),
-        (1, "b"),
-        (1, "b"),
-        (7, "u"),
-        (24, "s"),
-        (27, "s"),
-        (5, "s"),
-        (24, "s"),
-        (27, "s"),
-        (5, "s"),
-        (24, "s"),
-        (27, "s"),
-        (5, "s"),
-        (1, "b"),
-        (11, "s"),
-        (2, "u"),
-        (1, "b"),
-        (22, "s"),
-        (5, "s"),
-        (5, "u"),
-        (1, "b"),
-        (4, "u"),
-        (11, "u"),
-        (2, "u"),
-        (1, "b"),
-        (11, "u"),
-        (32, "s"),
-        (5, "u"),
-        (22, "s"),
-        (1, "b"),
-        (7, "r"),
+        (12, "u", "messageNumber"),
+        (6, "u", "satelliteId"),
+        (5, "u", "freqChannelNumber"),
+        (1, "b", "almanacHealth"),
+        (1, "b", "almanacHealthAvail"),
+        (2, "u", "p1"),
+        (12, "u", "tk"),
+        (1, "b", "bnMsb"),
+        (1, "b", "p2"),
+        (7, "u", "tb"),
+        (24, "s", "xnDot"),
+        (27, "s", "xn"),
+        (5, "s", "xnDotDot"),
+        (24, "s", "ynDot"),
+        (27, "s", "yn"),
+        (5, "s", "ynDotDot"),
+        (24, "s", "znDot"),
+        (27, "s", "zn"),
+        (5, "s", "znDotDot"),
+        (1, "b", "p3"),
+        (11, "s", "gammaN"),
+        (2, "u", "pWord"),
+        (1, "b", "ln3"),
+        (22, "s", "tauN"),
+        (5, "s", "deltaTauN"),
+        (5, "u", "en"),
+        (1, "b", "p4"),
+        (4, "u", "ft"),
+        (11, "u", "nt"),
+        (2, "u", "mWord"),
+        (1, "b", "additionalDataAvail"),
+        (11, "u", "na"),
+        (32, "s", "tauC"),
+        (5, "u", "n4"),
+        (22, "s", "tauGps"),
+        (1, "b", "ln5"),
+        (7, "r", "reserved"),
     ]
 
     # SSR messages 1057-1068 (RTCM 10403.3 Tables 3.5-37..62). The header
@@ -770,93 +811,151 @@ class Rtcm3:
     __ssrMessages = {
         1057: {
             "header": (
-                "uint:12, uint:20, uint:4, bool, bool, uint:4, uint:16, uint:4, "
-                "uint:6"
+                "uint:12=messageNumber, uint:20=epochTime1s, "
+                "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
+                "bool=satelliteReferenceDatum, uint:4=iodSsr, uint:16=ssrProviderId, "
+                "uint:4=ssrSolutionId, uint:6=noOfSatellites"
             ),
-            "sat": ("uint:6, uint:8, int:22, int:20, int:20, int:21, int:19, int:19"),
+            "sat": (
+                "uint:6=satelliteId, uint:8=iode, int:22=deltaRadial, "
+                "int:20=deltaAlongTrack, int:20=deltaCrossTrack, "
+                "int:21=dotDeltaRadial, int:19=dotDeltaAlongTrack, "
+                "int:19=dotDeltaCrossTrack"
+            ),
         },
         1058: {
             "header": (
-                "uint:12, uint:20, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+                "uint:12=messageNumber, uint:20=epochTime1s, "
+                "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
+                "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
+                "uint:6=noOfSatellites"
             ),
-            "sat": ("uint:6, int:22, int:21, int:27"),
+            "sat": (
+                "uint:6=satelliteId, int:22=deltaClockC0, int:21=deltaClockC1, "
+                "int:27=deltaClockC2"
+            ),
         },
         1059: {
             "header": (
-                "uint:12, uint:20, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+                "uint:12=messageNumber, uint:20=epochTime1s, "
+                "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
+                "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
+                "uint:6=noOfSatellites"
             ),
-            "satId": "uint:6",
-            "code": "uint:5, int:14",
+            "satId": "uint:6=satelliteId",
+            "code": "uint:5=signalAndTrackingModeIndicat, int:14=codeBias",
         },
         1060: {
             "header": (
-                "uint:12, uint:20, uint:4, bool, bool, uint:4, uint:16, uint:4, "
-                "uint:6"
+                "uint:12=messageNumber, uint:20=epochTime1s, "
+                "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
+                "bool=satelliteReferenceDatum, uint:4=iodSsr, uint:16=ssrProviderId, "
+                "uint:4=ssrSolutionId, uint:6=noOfSatellites"
             ),
             "sat": (
-                "uint:6, uint:8, int:22, int:20, int:20, int:21, int:19, int:19, "
-                "int:22, int:21, int:27"
+                "uint:6=satelliteId, uint:8=iode, int:22=deltaRadial, "
+                "int:20=deltaAlongTrack, int:20=deltaCrossTrack, "
+                "int:21=dotDeltaRadial, int:19=dotDeltaAlongTrack, "
+                "int:19=dotDeltaCrossTrack, int:22=deltaClockC0, int:21=deltaClockC1, "
+                "int:27=deltaClockC2"
             ),
         },
         1061: {
             "header": (
-                "uint:12, uint:20, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+                "uint:12=messageNumber, uint:20=epochTime1s, "
+                "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
+                "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
+                "uint:6=noOfSatellites"
             ),
-            "sat": ("uint:6, uint:6"),
+            "sat": ("uint:6=satelliteId, uint:6=ssrUra"),
         },
         1062: {
             "header": (
-                "uint:12, uint:20, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+                "uint:12=messageNumber, uint:20=epochTime1s, "
+                "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
+                "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
+                "uint:6=noOfSatellites"
             ),
-            "sat": ("uint:6, int:22"),
+            "sat": ("uint:6=satelliteId, int:22=highRateClockCorrection"),
         },
         1063: {
             "header": (
-                "uint:12, uint:17, uint:4, bool, bool, uint:4, uint:16, uint:4, "
-                "uint:6"
+                "uint:12=messageNumber, uint:17=epochTime1s, "
+                "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
+                "bool=satelliteReferenceDatum, uint:4=iodSsr, uint:16=ssrProviderId, "
+                "uint:4=ssrSolutionId, uint:6=noOfSatellites"
             ),
-            "sat": ("uint:5, uint:8, int:22, int:20, int:20, int:21, int:19, int:19"),
+            "sat": (
+                "uint:5=satelliteId, uint:8=iod, int:22=deltaRadial, "
+                "int:20=deltaAlongTrack, int:20=deltaCrossTrack, "
+                "int:21=dotDeltaRadial, int:19=dotDeltaAlongTrack, "
+                "int:19=dotDeltaCrossTrack"
+            ),
         },
         1064: {
             "header": (
-                "uint:12, uint:17, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+                "uint:12=messageNumber, uint:17=epochTime1s, "
+                "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
+                "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
+                "uint:6=noOfSatellites"
             ),
-            "sat": ("uint:5, int:22, int:21, int:27"),
+            "sat": (
+                "uint:5=satelliteId, int:22=deltaClockC0, int:21=deltaClockC1, "
+                "int:27=deltaClockC2"
+            ),
         },
         1065: {
             "header": (
-                "uint:12, uint:17, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+                "uint:12=messageNumber, uint:17=epochTime1s, "
+                "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
+                "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
+                "uint:6=noOfSatellites"
             ),
-            "satId": "uint:5",
-            "code": "uint:5, int:14",
+            "satId": "uint:5=satelliteId",
+            "code": "uint:5=signalAndTrackingModeIndicat, int:14=codeBias",
         },
         1066: {
             "header": (
-                "uint:12, uint:17, uint:4, bool, bool, uint:4, uint:16, uint:4, "
-                "uint:6"
+                "uint:12=messageNumber, uint:17=epochTime1s, "
+                "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
+                "bool=satelliteReferenceDatum, uint:4=iodSsr, uint:16=ssrProviderId, "
+                "uint:4=ssrSolutionId, uint:6=noOfSatellites"
             ),
             "sat": (
-                "uint:5, uint:8, int:22, int:20, int:20, int:21, int:19, int:19, "
-                "int:22, int:21, int:27"
+                "uint:5=satelliteId, uint:8=iod, int:22=deltaRadial, "
+                "int:20=deltaAlongTrack, int:20=deltaCrossTrack, "
+                "int:21=dotDeltaRadial, int:19=dotDeltaAlongTrack, "
+                "int:19=dotDeltaCrossTrack, int:22=deltaClockC0, int:21=deltaClockC1, "
+                "int:27=deltaClockC2"
             ),
         },
         1067: {
             "header": (
-                "uint:12, uint:17, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+                "uint:12=messageNumber, uint:17=epochTime1s, "
+                "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
+                "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
+                "uint:6=noOfSatellites"
             ),
-            "sat": ("uint:5, uint:6"),
+            "sat": ("uint:5=satelliteId, uint:6=ssrUra"),
         },
         1068: {
             "header": (
-                "uint:12, uint:17, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
+                "uint:12=messageNumber, uint:17=epochTime1s, "
+                "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
+                "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
+                "uint:6=noOfSatellites"
             ),
-            "sat": ("uint:5, int:22"),
+            "sat": ("uint:5=satelliteId, int:22=highRateClockCorrection"),
         },
     }
 
     # 1014 Network Auxiliary Station Data (Table 3.5-16, fixed 117 bits).
     __msg1014 = (
-        "uint:12, uint:8, uint:4, uint:5, uint:12, uint:12, int:20, int:21, int:23"
+        "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+        "uint:5=numberOfAuxiliaryStationsTra, "
+        "uint:12=masterReferenceStationId, "
+        "uint:12=auxiliaryReferenceStationId, int:20=auxMasterDeltaLatitude, "
+        "int:21=auxMasterDeltaLongitude, int:23=auxMasterDeltaHeight"
     )
 
     # Network RTK messages: header (last field = satellite count) + one data
@@ -866,55 +965,114 @@ class Rtcm3:
     __networkMessages = {
         1015: {
             "header": (
-                "uint:12, uint:8, uint:4, uint:23, bool, uint:12, uint:12, uint:4"
+                "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+                "uint:23=epochTimeGpsTow, bool=multipleMessageIndicator, "
+                "uint:12=masterReferenceStationId, "
+                "uint:12=auxiliaryReferenceStationId, uint:4=numOfGpsSats"
             ),
-            "sat": ("uint:6, uint:2, uint:3, int:17"),
+            "sat": (
+                "uint:6=satelliteId, uint:2=ambiguityStatusFlag, uint:3=nonSyncCount, "
+                "int:17=df069"
+            ),
         },
         1016: {
             "header": (
-                "uint:12, uint:8, uint:4, uint:23, bool, uint:12, uint:12, uint:4"
+                "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+                "uint:23=epochTimeGpsTow, bool=multipleMessageIndicator, "
+                "uint:12=masterReferenceStationId, "
+                "uint:12=auxiliaryReferenceStationId, uint:4=numOfGpsSats"
             ),
-            "sat": ("uint:6, uint:2, uint:3, int:17, uint:8"),
+            "sat": (
+                "uint:6=satelliteId, uint:2=ambiguityStatusFlag, uint:3=nonSyncCount, "
+                "int:17=df070, uint:8=iode"
+            ),
         },
         1017: {
             "header": (
-                "uint:12, uint:8, uint:4, uint:23, bool, uint:12, uint:12, uint:4"
+                "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+                "uint:23=epochTimeGpsTow, bool=multipleMessageIndicator, "
+                "uint:12=masterReferenceStationId, "
+                "uint:12=auxiliaryReferenceStationId, uint:4=numOfGpsSats"
             ),
-            "sat": ("uint:6, uint:2, uint:3, int:17, uint:8, int:17"),
+            "sat": (
+                "uint:6=satelliteId, uint:2=ambiguityStatusFlag, uint:3=nonSyncCount, "
+                "int:17=df070, uint:8=iode, int:17=df069"
+            ),
         },
         1037: {
             "header": (
-                "uint:12, uint:8, uint:4, uint:20, bool, uint:12, uint:12, uint:4"
+                "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+                "uint:20=networkEpochTime, bool=multipleMessageIndicator, "
+                "uint:12=masterReferenceStationId, "
+                "uint:12=auxiliaryReferenceStationId, uint:4=numOfGlonassDataEntries"
             ),
-            "sat": ("uint:6, uint:2, uint:3, int:17"),
+            "sat": ("uint:6=df038, uint:2=df235, uint:3=nonSyncCount, int:17=df237"),
         },
         1038: {
             "header": (
-                "uint:12, uint:8, uint:4, uint:20, bool, uint:12, uint:12, uint:4"
+                "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+                "uint:20=networkEpochTime, bool=multipleMessageIndicator, "
+                "uint:12=masterReferenceStationId, "
+                "uint:12=auxiliaryReferenceStationId, uint:4=numOfGlonassDataEntries"
             ),
-            "sat": ("uint:6, uint:2, uint:3, int:17, uint:8"),
+            "sat": (
+                "uint:6=df038, uint:2=df235, uint:3=nonSyncCount, int:17=df238, "
+                "uint:8=iod"
+            ),
         },
         1039: {
             "header": (
-                "uint:12, uint:8, uint:4, uint:20, bool, uint:12, uint:12, uint:4"
+                "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+                "uint:20=networkEpochTime, bool=multipleMessageIndicator, "
+                "uint:12=masterReferenceStationId, "
+                "uint:12=auxiliaryReferenceStationId, uint:4=numOfGlonassDataEntries"
             ),
-            "sat": ("uint:6, uint:2, uint:3, int:17, uint:8, int:17"),
+            "sat": (
+                "uint:6=df038, uint:2=df235, uint:3=nonSyncCount, int:17=df238, "
+                "uint:8=iod, int:17=df237"
+            ),
         },
         1030: {
-            "header": ("uint:12, uint:20, uint:7, uint:5"),
-            "sat": ("uint:6, uint:8, uint:9, uint:6, uint:10, uint:10"),
+            "header": (
+                "uint:12=messageNumber, uint:20=residualsEpochTimeTow, uint:7=nRefs, "
+                "uint:5=numberOfSatelliteSignalsProc"
+            ),
+            "sat": (
+                "uint:6=satelliteId, uint:8=ocs, uint:9=ods, uint:6=ohs, uint:10=ics, "
+                "uint:10=ids"
+            ),
         },
         1031: {
-            "header": ("uint:12, uint:17, uint:7, uint:5"),
-            "sat": ("uint:6, uint:8, uint:9, uint:6, uint:10, uint:10"),
+            "header": (
+                "uint:12=messageNumber, uint:17=residualsEpochTimeTk, uint:7=nRefs, "
+                "uint:5=df035"
+            ),
+            "sat": (
+                "uint:6=satelliteId, uint:8=ocs, uint:9=ods, uint:6=ohs, uint:10=ics, "
+                "uint:10=ids"
+            ),
         },
         1034: {
-            "header": ("uint:12, uint:12, uint:20, uint:5"),
-            "sat": ("uint:6, uint:8, int:12, int:12, int:14, int:14"),
+            "header": (
+                "uint:12=messageNumber, uint:12=referenceStationId, "
+                "uint:20=fkpEpochTimeTow, uint:5=df006"
+            ),
+            "sat": (
+                "uint:6=satelliteId, uint:8=df071, int:12=n0GeometricGradientNorth, "
+                "int:12=e0GeometricGradientEast, int:14=niIonosphericGradientNorth, "
+                "int:14=eiIonosphericGradientEast"
+            ),
         },
         1035: {
-            "header": ("uint:12, uint:12, uint:17, uint:5"),
-            "sat": ("uint:6, uint:8, int:12, int:12, int:14, int:14"),
+            "header": (
+                "uint:12=messageNumber, uint:12=referenceStationId, "
+                "uint:17=fkpEpochTime, uint:5=df035"
+            ),
+            "sat": (
+                "uint:6=satelliteId, uint:8=iode, int:12=n0GeometricGradientNorth, "
+                "int:12=e0GeometricGradientEast, int:14=niIonosphericGradientNorth, "
+                "int:14=eiIonosphericGradientEast"
+            ),
         },
     }
 
