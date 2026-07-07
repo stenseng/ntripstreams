@@ -215,9 +215,14 @@ class TestEphemerisMessages(unittest.TestCase):
         for mt, fmt in fmts.items():
             self.assertEqual(format_bits(fmt), self.SPEC_BITS[mt], f"{mt} width")
 
-    def test_glonass_1020_field_widths(self):
-        total = sum(bits for bits, _kind, _name in Rtcm3._Rtcm3__msg1020Fields)
-        self.assertEqual(total, self.SPEC_BITS[1020])
+    def test_glonass_1020_sign_magnitude_conversion(self):
+        rtcm = Rtcm3()
+        fmt = "uint:24=xnDot, uint:6=satelliteId"
+        negative = (1 << 23) | 100  # sign bit set, magnitude 100
+        out = rtcm._convertSignMagnitude(fmt, [negative, 5])
+        self.assertEqual(out[0], -100)  # sign-magnitude field converted
+        self.assertEqual(out[1], 5)  # non-sign-magnitude field untouched
+        self.assertEqual(rtcm._convertSignMagnitude(fmt, [100, 5])[0], 100)
 
     def test_captured_ephemeris_frames_fully_consume(self):
         rtcm = Rtcm3()

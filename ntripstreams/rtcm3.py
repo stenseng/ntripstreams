@@ -64,25 +64,23 @@ class Rtcm3:
             return ""
         return message.read(f"bytes:{length}").decode("ISO-8859-1")
 
-    def _readSignMagnitude(self, message, bits):
-        """Read a GLONASS sign-magnitude integer (MSB = sign, rest = magnitude)."""
-        raw = message.read(f"uint:{bits}")
-        magnitude = raw & ((1 << (bits - 1)) - 1)
-        return -magnitude if raw >> (bits - 1) else magnitude
+    def _convertSignMagnitude(self, fmt, values):
+        """Convert the sign-magnitude fields of a decoded message in place.
 
-    def _decode1020(self, message):
-        """Decode a GLONASS ephemeris (1020), handling sign-magnitude fields."""
-        head = []
-        for bits, kind, _name in self.__msg1020Fields:
-            if kind == "b":
-                head.append(message.read("bool"))
-            elif kind == "u":
-                head.append(message.read(f"uint:{bits}"))
-            elif kind == "s":
-                head.append(self._readSignMagnitude(message, bits))
-            else:  # 'r' reserved
-                message.pos += bits
-        return head
+        Fields whose name is in ``__msg1020SignMagnitude`` were read as raw
+        ``uint`` (bitstring has no sign-magnitude type); convert them to signed
+        integers (MSB = sign, remaining bits = magnitude). Assumes the format
+        has no ``pad`` tokens, so tokens align one-to-one with *values*.
+        """
+        for index, token in enumerate(fmt.split(",")):
+            token = token.strip()
+            name = token.split("=", 1)[1] if "=" in token else ""
+            if name in self.__msg1020SignMagnitude:
+                bits = int(token.split(":", 1)[1].split("=", 1)[0])
+                raw = values[index]
+                magnitude = raw & ((1 << (bits - 1)) - 1)
+                values[index] = -magnitude if raw >> (bits - 1) else magnitude
+        return values
 
     def _decodeSsr(self, message, messageType):
         """Decode an SSR message (1057-1068): header + per-satellite blocks.
@@ -470,9 +468,10 @@ class Rtcm3:
                     satData.append(message.read("int:16"))
 
         elif messageType in self.__ephemerisFormats:
-            head = self._rl(message, self.__ephemerisFormats[messageType])
-        elif messageType == 1020:
-            head = self._decode1020(message)
+            fmt = self.__ephemerisFormats[messageType]
+            head = self._rl(message, fmt)
+            if messageType == 1020:
+                head = self._convertSignMagnitude(fmt, head)
         elif messageType in self.__ssrMessages:
             head, satData = self._decodeSsr(message, messageType)
         elif messageType == 1014:
@@ -760,50 +759,41 @@ class Rtcm3:
             "bool=e5bValidity, uint:2=e1bHealth, bool=e1bValidity, "
             "uint:2=reserved"
         ),
+        # GLONASS ephemeris (Table 3.5-22). The sign-magnitude (intS) fields
+        # are read as raw uint here and converted by _convertSignMagnitude
+        # (bitstring has no native sign-magnitude type); see
+        # __msg1020SignMagnitude.
+        1020: (
+            "uint:12=messageNumber, uint:6=satelliteId, "
+            "uint:5=freqChannelNumber, bool=almanacHealth, "
+            "bool=almanacHealthAvail, uint:2=p1, uint:12=tk, bool=bnMsb, "
+            "bool=p2, uint:7=tb, uint:24=xnDot, uint:27=xn, uint:5=xnDotDot, "
+            "uint:24=ynDot, uint:27=yn, uint:5=ynDotDot, uint:24=znDot, "
+            "uint:27=zn, uint:5=znDotDot, bool=p3, uint:11=gammaN, "
+            "uint:2=pWord, bool=ln3, uint:22=tauN, uint:5=deltaTauN, "
+            "uint:5=en, bool=p4, uint:4=ft, uint:11=nt, uint:2=mWord, "
+            "bool=additionalDataAvail, uint:11=na, uint:32=tauC, uint:5=n4, "
+            "uint:22=tauGps, bool=ln5, uint:7=reserved"
+        ),
     }
 
-    # GLONASS 1020 ephemeris (Table 3.5-22): (bits, kind) where kind is
-    # 'u' uint, 's' sign-magnitude int (GLONASS uses intS), 'b' bool,
-    # 'r' reserved (skipped). bitstring has no native sign-magnitude type.
-    __msg1020Fields = [
-        (12, "u", "messageNumber"),
-        (6, "u", "satelliteId"),
-        (5, "u", "freqChannelNumber"),
-        (1, "b", "almanacHealth"),
-        (1, "b", "almanacHealthAvail"),
-        (2, "u", "p1"),
-        (12, "u", "tk"),
-        (1, "b", "bnMsb"),
-        (1, "b", "p2"),
-        (7, "u", "tb"),
-        (24, "s", "xnDot"),
-        (27, "s", "xn"),
-        (5, "s", "xnDotDot"),
-        (24, "s", "ynDot"),
-        (27, "s", "yn"),
-        (5, "s", "ynDotDot"),
-        (24, "s", "znDot"),
-        (27, "s", "zn"),
-        (5, "s", "znDotDot"),
-        (1, "b", "p3"),
-        (11, "s", "gammaN"),
-        (2, "u", "pWord"),
-        (1, "b", "ln3"),
-        (22, "s", "tauN"),
-        (5, "s", "deltaTauN"),
-        (5, "u", "en"),
-        (1, "b", "p4"),
-        (4, "u", "ft"),
-        (11, "u", "nt"),
-        (2, "u", "mWord"),
-        (1, "b", "additionalDataAvail"),
-        (11, "u", "na"),
-        (32, "s", "tauC"),
-        (5, "u", "n4"),
-        (22, "s", "tauGps"),
-        (1, "b", "ln5"),
-        (7, "r", "reserved"),
-    ]
+    # Names of the GLONASS 1020 fields encoded as sign-magnitude integers.
+    __msg1020SignMagnitude = {
+        "xnDot",
+        "xn",
+        "xnDotDot",
+        "ynDot",
+        "yn",
+        "ynDotDot",
+        "znDot",
+        "zn",
+        "znDotDot",
+        "gammaN",
+        "tauN",
+        "deltaTauN",
+        "tauC",
+        "tauGps",
+    }
 
     # SSR messages 1057-1068 (RTCM 10403.3 Tables 3.5-37..62). The header
     # ends with DF387 No. of Satellites; one satellite block follows per
