@@ -204,6 +204,37 @@ class TestStationAndDescriptorMessages(unittest.TestCase):
         self.assertEqual(len(sat), head[3].count("1"))
 
 
+class TestEphemerisMessages(unittest.TestCase):
+    """Ephemeris message widths (10403.3) and decoding of captured frames."""
+
+    # message type -> total payload bits (TOTAL row of the spec table)
+    SPEC_BITS = {1019: 488, 1020: 360, 1042: 511, 1044: 485, 1045: 496, 1046: 504}
+
+    def test_fixed_ephemeris_format_widths(self):
+        fmts = Rtcm3._Rtcm3__ephemerisFormats
+        for mt, fmt in fmts.items():
+            self.assertEqual(format_bits(fmt), self.SPEC_BITS[mt], f"{mt} width")
+
+    def test_glonass_1020_field_widths(self):
+        total = sum(bits for bits, _ in Rtcm3._Rtcm3__msg1020Fields)
+        self.assertEqual(total, self.SPEC_BITS[1020])
+
+    def test_captured_ephemeris_frames_fully_consume(self):
+        rtcm = Rtcm3()
+        checked = 0
+        for path in glob.glob(RAW_GLOB):
+            for payload in iter_raw_frames(path):
+                mt = payload.peek("uint:12")
+                if mt not in self.SPEC_BITS:
+                    continue
+                _, data = rtcm.decodeRtcmMessage(payload)
+                self.assertNotEqual(data[0], "Message type not implemented")
+                leftover = payload.len - payload.pos
+                self.assertTrue(0 <= leftover < 8, f"{mt} leftover {leftover}")
+                checked += 1
+        self.assertGreater(checked, 0)  # 1042 and 1046 are in the captures
+
+
 class TestLegacyRecordWidths(unittest.TestCase):
     """Per-satellite record widths must match the RTCM 10403.3 message tables.
 

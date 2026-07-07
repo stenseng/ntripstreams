@@ -54,6 +54,26 @@ class Rtcm3:
             return ""
         return message.read(f"bytes:{length}").decode("ISO-8859-1")
 
+    def _readSignMagnitude(self, message, bits):
+        """Read a GLONASS sign-magnitude integer (MSB = sign, rest = magnitude)."""
+        raw = message.read(f"uint:{bits}")
+        magnitude = raw & ((1 << (bits - 1)) - 1)
+        return -magnitude if raw >> (bits - 1) else magnitude
+
+    def _decode1020(self, message):
+        """Decode a GLONASS ephemeris (1020), handling sign-magnitude fields."""
+        head = []
+        for bits, kind in self.__msg1020Fields:
+            if kind == "b":
+                head.append(message.read("bool"))
+            elif kind == "u":
+                head.append(message.read(f"uint:{bits}"))
+            elif kind == "s":
+                head.append(self._readSignMagnitude(message, bits))
+            else:  # 'r' reserved
+                message.pos += bits
+        return head
+
     def mjd(self, unixTimestamp):
         """Convert a Unix timestamp to a Modified Julian Date (integer day).
 
@@ -391,6 +411,11 @@ class Rtcm3:
                 if mask == "1":
                     satData.append(message.read("int:16"))
 
+        elif messageType in self.__ephemerisFormats:
+            head = self._rl(message, self.__ephemerisFormats[messageType])
+        elif messageType == 1020:
+            head = self._decode1020(message)
+
         else:
             head = "Message type not implemented"
         data = [head, satData, signalData]
@@ -614,6 +639,84 @@ class Rtcm3:
         "pad:1, int:38=arpEcefY, uint:2=quarterCycleIndicator, int:38=arpEcefZ"
     )
     __msg1006 = __msg1005 + ", uint:16=antennaHeight"
+
+    # Satellite ephemeris messages (RTCM 10403.3 Tables 3.5-21, 110-113).
+    # Values are positional; see the cited tables for field names/scales.
+    __ephemerisFormats = {
+        1019: (
+            "uint:12, uint:6, uint:10, uint:4, uint:2, int:14, uint:8, uint:16, "
+            "int:8, int:16, int:22, uint:10, int:16, int:16, int:32, int:16, "
+            "uint:32, int:16, uint:32, uint:16, int:16, int:32, int:16, int:32, "
+            "int:16, int:32, int:24, int:8, uint:6, bool, bool"
+        ),
+        1042: (
+            "uint:12, uint:6, uint:13, uint:4, int:14, uint:5, uint:17, int:11, "
+            "int:22, int:24, uint:5, int:18, int:16, int:32, int:18, uint:32, "
+            "int:18, uint:32, uint:17, int:18, int:32, int:18, int:32, int:18, "
+            "int:32, int:24, int:10, int:10, bool"
+        ),
+        1044: (
+            "uint:12, uint:4, uint:16, int:8, int:16, int:22, uint:8, int:16, "
+            "int:16, int:32, int:16, uint:32, int:16, uint:32, uint:16, int:16, "
+            "int:32, int:16, int:32, int:16, int:32, int:24, int:14, uint:2, "
+            "uint:10, uint:4, uint:6, int:8, uint:10, bool"
+        ),
+        1045: (
+            "uint:12, uint:6, uint:12, uint:10, uint:8, int:14, uint:14, int:6, "
+            "int:21, int:31, int:16, int:16, int:32, int:16, uint:32, int:16, "
+            "uint:32, uint:14, int:16, int:32, int:16, int:32, int:16, int:32, "
+            "int:24, int:10, uint:2, bool, uint:7"
+        ),
+        1046: (
+            "uint:12, uint:6, uint:12, uint:10, uint:8, int:14, uint:14, int:6, "
+            "int:21, int:31, int:16, int:16, int:32, int:16, uint:32, int:16, "
+            "uint:32, uint:14, int:16, int:32, int:16, int:32, int:16, int:32, "
+            "int:24, int:10, int:10, uint:2, bool, uint:2, bool, uint:2"
+        ),
+    }
+
+    # GLONASS 1020 ephemeris (Table 3.5-22): (bits, kind) where kind is
+    # 'u' uint, 's' sign-magnitude int (GLONASS uses intS), 'b' bool,
+    # 'r' reserved (skipped). bitstring has no native sign-magnitude type.
+    __msg1020Fields = [
+        (12, "u"),
+        (6, "u"),
+        (5, "u"),
+        (1, "b"),
+        (1, "b"),
+        (2, "u"),
+        (12, "u"),
+        (1, "b"),
+        (1, "b"),
+        (7, "u"),
+        (24, "s"),
+        (27, "s"),
+        (5, "s"),
+        (24, "s"),
+        (27, "s"),
+        (5, "s"),
+        (24, "s"),
+        (27, "s"),
+        (5, "s"),
+        (1, "b"),
+        (11, "s"),
+        (2, "u"),
+        (1, "b"),
+        (22, "s"),
+        (5, "s"),
+        (5, "u"),
+        (1, "b"),
+        (4, "u"),
+        (11, "u"),
+        (2, "u"),
+        (1, "b"),
+        (11, "u"),
+        (32, "s"),
+        (5, "u"),
+        (22, "s"),
+        (1, "b"),
+        (7, "r"),
+    ]
 
     # MSM messages
     __msgMsmHead = (
