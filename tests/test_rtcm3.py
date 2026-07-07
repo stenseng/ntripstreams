@@ -315,6 +315,71 @@ class TestSsrMessages(unittest.TestCase):
                     self.assertEqual(payload.pos, total)  # consumed exactly
 
 
+class TestNetworkMessages(unittest.TestCase):
+    """Network RTK messages (spec bit totals + synthetic round-trip)."""
+
+    HEADER_BITS = {
+        1015: 76,
+        1016: 76,
+        1017: 76,
+        1037: 73,
+        1038: 73,
+        1039: 73,
+        1030: 44,
+        1031: 41,
+        1034: 49,
+        1035: 46,
+    }
+    SAT_BITS = {
+        1015: 28,
+        1016: 36,
+        1017: 53,
+        1037: 28,
+        1038: 36,
+        1039: 53,
+        1030: 49,
+        1031: 49,
+        1034: 66,
+        1035: 66,
+    }
+
+    def test_1014_fixed_width(self):
+        self.assertEqual(format_bits(Rtcm3._Rtcm3__msg1014), 117)
+
+    def test_header_and_block_bit_totals(self):
+        net = Rtcm3._Rtcm3__networkMessages
+        for mt, spec in net.items():
+            self.assertEqual(format_bits(spec["header"]), self.HEADER_BITS[mt])
+            self.assertEqual(format_bits(spec["sat"]), self.SAT_BITS[mt])
+
+    def test_synthetic_roundtrip(self):
+        net = Rtcm3._Rtcm3__networkMessages
+        rtcm = Rtcm3()
+
+        def zeros(n):
+            return BitStream(uint=0, length=n) if n else BitStream()
+
+        for mt, spec in net.items():
+            hbits = format_bits(spec["header"])
+            count_width = int(
+                spec["header"].replace(" ", "").split(",")[-1].split(":")[1]
+            )
+            for num_sats in (0, 1, 5):
+                b = zeros(hbits)
+                b[0:12] = BitStream(uint=mt, length=12)
+                b[hbits - count_width : hbits] = BitStream(
+                    uint=num_sats, length=count_width
+                )
+                for _ in range(num_sats):
+                    b += zeros(format_bits(spec["sat"]))
+                total = b.len
+                b.pos = 0
+                mtype, data = rtcm.decodeRtcmMessage(b)
+                self.assertEqual(mtype, mt)
+                self.assertEqual(len(data[1]), num_sats)
+                self.assertEqual(b.pos, total)
+
+
 class TestLegacyRecordWidths(unittest.TestCase):
     """Per-satellite record widths must match the RTCM 10403.3 message tables.
 

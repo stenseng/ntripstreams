@@ -444,6 +444,13 @@ class Rtcm3:
             head = self._decode1020(message)
         elif messageType in self.__ssrMessages:
             head, satData = self._decodeSsr(message, messageType)
+        elif messageType == 1014:
+            head = self._rl(message, self.__msg1014)
+        elif messageType in self.__networkMessages:
+            spec = self.__networkMessages[messageType]
+            head = self._rl(message, spec["header"])
+            for _ in range(head[-1]):  # last header field = satellite count
+                satData.append(self._rl(message, spec["sat"]))
 
         else:
             head = "Message type not implemented"
@@ -834,6 +841,70 @@ class Rtcm3:
                 "uint:12, uint:17, uint:4, bool, uint:4, uint:16, uint:4, uint:6"
             ),
             "sat": ("uint:5, int:22"),
+        },
+    }
+
+    # 1014 Network Auxiliary Station Data (Table 3.5-16, fixed 117 bits).
+    __msg1014 = (
+        "uint:12, uint:8, uint:4, uint:5, uint:12, uint:12, int:20, int:21, int:23"
+    )
+
+    # Network RTK messages: header (last field = satellite count) + one data
+    # block per satellite (RTCM 10403.3 Tables 3.5-17..20, 31-34, 63-70).
+    # Correction-difference (1015-17, 1037-39), residual (1030-31) and
+    # FKP-gradient (1034-35) messages all share this header+block shape.
+    __networkMessages = {
+        1015: {
+            "header": (
+                "uint:12, uint:8, uint:4, uint:23, bool, uint:12, uint:12, uint:4"
+            ),
+            "sat": ("uint:6, uint:2, uint:3, int:17"),
+        },
+        1016: {
+            "header": (
+                "uint:12, uint:8, uint:4, uint:23, bool, uint:12, uint:12, uint:4"
+            ),
+            "sat": ("uint:6, uint:2, uint:3, int:17, uint:8"),
+        },
+        1017: {
+            "header": (
+                "uint:12, uint:8, uint:4, uint:23, bool, uint:12, uint:12, uint:4"
+            ),
+            "sat": ("uint:6, uint:2, uint:3, int:17, uint:8, int:17"),
+        },
+        1037: {
+            "header": (
+                "uint:12, uint:8, uint:4, uint:20, bool, uint:12, uint:12, uint:4"
+            ),
+            "sat": ("uint:6, uint:2, uint:3, int:17"),
+        },
+        1038: {
+            "header": (
+                "uint:12, uint:8, uint:4, uint:20, bool, uint:12, uint:12, uint:4"
+            ),
+            "sat": ("uint:6, uint:2, uint:3, int:17, uint:8"),
+        },
+        1039: {
+            "header": (
+                "uint:12, uint:8, uint:4, uint:20, bool, uint:12, uint:12, uint:4"
+            ),
+            "sat": ("uint:6, uint:2, uint:3, int:17, uint:8, int:17"),
+        },
+        1030: {
+            "header": ("uint:12, uint:20, uint:7, uint:5"),
+            "sat": ("uint:6, uint:8, uint:9, uint:6, uint:10, uint:10"),
+        },
+        1031: {
+            "header": ("uint:12, uint:17, uint:7, uint:5"),
+            "sat": ("uint:6, uint:8, uint:9, uint:6, uint:10, uint:10"),
+        },
+        1034: {
+            "header": ("uint:12, uint:12, uint:20, uint:5"),
+            "sat": ("uint:6, uint:8, int:12, int:12, int:14, int:14"),
+        },
+        1035: {
+            "header": ("uint:12, uint:12, uint:17, uint:5"),
+            "sat": ("uint:6, uint:8, int:12, int:12, int:14, int:14"),
         },
     }
 
