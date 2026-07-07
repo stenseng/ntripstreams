@@ -31,10 +31,20 @@ class Rtcm3:
     """Encode and decode RTCM 3 messages.
 
     Provides frame-level helpers (:meth:`decodeRtcmFrame`,
-    :meth:`encodeRtcmFrame`) that handle the preamble and CRC, message-level
-    decoding of the legacy GPS/GLONASS observables (1001-1004, 1009-1012) and
-    the Multiple Signal Messages (MSM, 1071-1127), and lookups for message
-    descriptions, GNSS constellations and MSM signal types.
+    :meth:`encodeRtcmFrame`) that handle the preamble and CRC, plus
+    message-level decoding of:
+
+    - legacy GPS/GLONASS observables (1001-1004, 1009-1012);
+    - Multiple Signal Messages (MSM, 1071-1127);
+    - stationary reference station and descriptors (1005-1008, 1013, 1033,
+      1230);
+    - satellite ephemerides (1019, 1020, 1042, 1044-1046);
+    - GPS/GLONASS SSR corrections (1057-1068);
+    - network RTK messages (1014-1017, 1030-1031, 1034-1035, 1037-1039).
+
+    plus lookups for message descriptions, GNSS constellations and MSM signal
+    types. Decoded fields are returned positionally; consult the cited
+    RTCM 10403.3 tables for field names, scales and units.
     """
 
     def __init__(self):
