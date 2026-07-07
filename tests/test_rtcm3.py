@@ -384,7 +384,7 @@ class TestLegacyRecordWidths(unittest.TestCase):
 
     Guards the GLONASS field widths (DF041 = 25 bits, DF044 = 7 bits) whose
     two offsetting errors previously summed to the correct total, hiding a
-    mis-alignment of the decoded L1 pseudorange/phaserange/lock/ambiguity.
+    misalignment of the decoded L1 pseudorange/phaserange/lock/ambiguity.
     """
 
     # {constant suffix: (spec table, total bits per satellite record)}
