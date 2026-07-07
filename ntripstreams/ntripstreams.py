@@ -36,7 +36,7 @@ class NtripStream:
 
     def __init__(self):
         self.__CLIENTVERSION = __version__
-        self.__CLIENTNAME = "Bedrock Solutions NtripClient/" + f"{self.__CLIENTVERSION}"
+        self.__CLIENTNAME = "Bedrock_Solutions_NtripClient/" + f"{self.__CLIENTVERSION}"
         self.casterUrl = None
         self.ntripWriter = None
         self.ntripReader = None
@@ -150,7 +150,9 @@ class NtripStream:
         self.ntripMountPoint = ntripMountPoint
         timestamp = strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime())
         if nmeaString:
-            self.nmeaString = nmeaString.rstrip("\r\n") + "\r\n"
+            # NTRIP 2.0 (sec. 2.1.3): the position is sent as an Ntrip-GGA
+            # header line, not as a bare NMEA line inside the header block.
+            self.nmeaString = f"Ntrip-GGA: {nmeaString.rstrip(chr(13) + chr(10))}\r\n"
         if ntripUser and ntripPassword:
             ntripAuth = b64encode(
                 (ntripUser + ":" + ntripPassword).encode("ISO-8859-1")
@@ -221,11 +223,11 @@ class NtripStream:
                 "\r\n"
             ).encode("ISO-8859-1")
         elif self.ntripVersion == 1:
-            ntripAuth = ""
-            if ntripPassword:
-                ntripAuth = b64encode(ntripPassword.encode("ISO-8859-1")).decode()
+            # NTRIP 1.0 (sec. 2.2): the SOURCE request carries the password in
+            # clear text (no user name, not Base64) directly after SOURCE.
+            sourcePassword = ntripPassword if ntripPassword else ""
             self.ntripRequestHeader = (
-                f"SOURCE {ntripAuth} "
+                f"SOURCE {sourcePassword} "
                 f"/{ntripMountPoint} HTTP/1.1\r\n"
                 "Source-Agent: NTRIP "
                 f"{self.__CLIENTNAME}\r\n"
@@ -289,7 +291,11 @@ class NtripStream:
             self.ntripStreamChunked = True
             logging.info(f"{self.ntripMountPoint}: Stream is chunked")
         statusResponse = self.ntripResponseHeader[0].split(" ")
-        if len(statusResponse) > 1:
+        if statusResponse[0] == "OK":
+            # NTRIP 1.0 (sec. 2.2): an NtripServer upload is acknowledged with a
+            # bare "OK" instead of a numeric status code.
+            self.ntripResponseStatusCode = "200"
+        elif len(statusResponse) > 1:
             self.ntripResponseStatusCode = statusResponse[1]
         else:
             self.ntripResponseStatusCode = 0
@@ -340,6 +346,40 @@ class NtripStream:
             for line in self.ntripResponseHeader:
                 logging.debug(f"TCP response: {line}")
 
+    async def _readChunkedBody(self) -> bytes:
+        """Read an HTTP chunked-transfer body and return the decoded bytes.
+
+        Reads chunks until the terminating zero-length chunk or end of stream,
+        stripping the hex size lines and any ``;extension`` (RTCM 10410.1
+        sec. 2.4).
+
+        Returns
+        -------
+        bytes
+            The concatenated chunk payloads.
+        """
+        body = bytearray()
+        while True:
+            try:
+                sizeLine = await self.ntripReader.readuntil(b"\r\n")
+            except (asyncio.IncompleteReadError, asyncio.LimitOverrunError):
+                break
+            sizeField = sizeLine[:-2].split(b";", 1)[0].strip()
+            if not sizeField:
+                continue
+            try:
+                length = int(sizeField, 16)
+            except ValueError:
+                break
+            if length == 0:
+                break
+            try:
+                chunk = await self.ntripReader.readexactly(length + 2)
+            except (asyncio.IncompleteReadError, asyncio.LimitOverrunError):
+                break
+            body += chunk[:-2]
+        return bytes(body)
+
     async def requestSourcetable(self, casterUrl: str) -> list:
         """Connect to a caster and return its full source table.
 
@@ -362,24 +402,38 @@ class NtripStream:
         self.setRequestSourceTableHeader(casterUrl)
         await self.sendRequestHeader()
         ntripSourcetable = []
-        while True:
-            try:
-                line = await self.ntripReader.readline()
-            except (asyncio.IncompleteReadError, asyncio.LimitOverrunError) as error:
-                logging.error(f"Connection to {self.casterUrl} failed with: {error}")
-                raise ConnectionError(
-                    f"Connection to {self.casterUrl} failed with: {error}"
-                ) from None
-            if not line:
-                break
-            line = line.decode("ISO-8859-1").rstrip()
-            if line == "ENDSOURCETABLE":
+        if self.ntripStreamChunked:
+            # A caster may send the source table with chunked transfer encoding
+            # (RTCM 10410.1 sec. 2.4); decode it before splitting into lines.
+            body = await self._readChunkedBody()
+            for line in body.decode("ISO-8859-1").splitlines():
                 ntripSourcetable.append(line)
-                self.ntripWriter.close()
-                logging.info("Sourcetabel received.")
-                break
-            else:
+                if line == "ENDSOURCETABLE":
+                    break
+            self.ntripWriter.close()
+            logging.info("Sourcetabel received.")
+        else:
+            while True:
+                try:
+                    line = await self.ntripReader.readline()
+                except (
+                    asyncio.IncompleteReadError,
+                    asyncio.LimitOverrunError,
+                ) as error:
+                    logging.error(
+                        f"Connection to {self.casterUrl} failed with: {error}"
+                    )
+                    raise ConnectionError(
+                        f"Connection to {self.casterUrl} failed with: {error}"
+                    ) from None
+                if not line:
+                    break
+                line = line.decode("ISO-8859-1").rstrip()
                 ntripSourcetable.append(line)
+                if line == "ENDSOURCETABLE":
+                    self.ntripWriter.close()
+                    logging.info("Sourcetabel received.")
+                    break
         return ntripSourcetable
 
     async def requestNtripServer(
