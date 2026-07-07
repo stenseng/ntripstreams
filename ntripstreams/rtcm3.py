@@ -48,6 +48,12 @@ class Rtcm3:
         """unpack with ``=name`` labels stripped for bitstring >= 4.2."""
         return message.unpack(_readfmt(fmt))
 
+    def _readCountedString(self, message, length):
+        """Read *length* ISO-8859-1 characters (an ``char(N)`` field)."""
+        if not length:
+            return ""
+        return message.read(f"bytes:{length}").decode("ISO-8859-1")
+
     def mjd(self, unixTimestamp):
         """Convert a Unix timestamp to a Modified Julian Date (integer day).
 
@@ -349,6 +355,42 @@ class Rtcm3:
 
         elif messageType == 1029:
             head = self._rl(message, self.__msg1029)
+
+        elif messageType == 1005:
+            head = self._rl(message, self.__msg1005)
+        elif messageType == 1006:
+            head = self._rl(message, self.__msg1006)
+        elif messageType == 1007:
+            head = self._rl(message, "uint:12, uint:12, uint:8")
+            head.append(self._readCountedString(message, head[2]))
+            head.append(message.read("uint:8"))
+        elif messageType == 1008:
+            head = self._rl(message, "uint:12, uint:12, uint:8")
+            head.append(self._readCountedString(message, head[2]))
+            head.append(message.read("uint:8"))
+            serialCount = message.read("uint:8")
+            head.append(serialCount)
+            head.append(self._readCountedString(message, serialCount))
+        elif messageType == 1033:
+            head = self._rl(message, "uint:12, uint:12")
+            for withSetupId in (True, False, False, False, False):
+                count = message.read("uint:8")
+                head.append(count)
+                head.append(self._readCountedString(message, count))
+                if withSetupId:
+                    head.append(message.read("uint:8"))
+        elif messageType == 1013:
+            head = self._rl(
+                message, "uint:12, uint:12, uint:16, uint:17, uint:5, uint:8"
+            )
+            for _ in range(head[4]):
+                satData.append(self._rl(message, "uint:12, bool, uint:16"))
+        elif messageType == 1230:
+            head = self._rl(message, "uint:12, uint:12, bool, pad:3, bin:4")
+            for mask in head[3]:
+                if mask == "1":
+                    satData.append(message.read("int:16"))
+
         else:
             head = "Message type not implemented"
         data = [head, satData, signalData]
@@ -563,6 +605,15 @@ class Rtcm3:
         "uint:17=utc, uint:7=utfChars, uint:8=charBytes, "
         "bytes=string"
     )
+
+    # Stationary antenna reference point (Table 3.5-6 / 3.5-7)
+    __msg1005 = (
+        "uint:12=messageType, uint:12=refStationId, uint:6=itrfYear, "
+        "bool=gpsIndicator, bool=glonassIndicator, bool=galileoIndicator, "
+        "bool=refStationIndicator, int:38=arpEcefX, bool=singleReceiverOsc, "
+        "pad:1, int:38=arpEcefY, uint:2=quarterCycleIndicator, int:38=arpEcefZ"
+    )
+    __msg1006 = __msg1005 + ", uint:16=antennaHeight"
 
     # MSM messages
     __msgMsmHead = (

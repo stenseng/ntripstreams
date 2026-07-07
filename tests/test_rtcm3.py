@@ -147,6 +147,63 @@ class TestRawCaptures(unittest.TestCase):
         self.assertGreater(total, 100)
 
 
+class TestStationAndDescriptorMessages(unittest.TestCase):
+    """Decode the stationary reference-station and descriptor messages."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.rtcm = Rtcm3()
+        cls.frames = {}  # message type -> decoded (head, sat, sig)
+        for path in glob.glob(RAW_GLOB):
+            for payload in iter_raw_frames(path):
+                mt = payload.peek("uint:12")
+                if (
+                    mt in {1005, 1006, 1007, 1008, 1013, 1033, 1230}
+                    and mt not in cls.frames
+                ):
+                    _, data = cls.rtcm.decodeRtcmMessage(payload)
+                    cls.frames[mt] = (data, payload.len - payload.pos)
+
+    def head(self, mt):
+        self.assertIn(mt, self.frames, f"no captured {mt} frame")
+        data, leftover = self.frames[mt]
+        self.assertNotEqual(data[0], "Message type not implemented")
+        self.assertTrue(0 <= leftover < 8, f"{mt} leftover {leftover} bits")
+        return data
+
+    def test_1005_arp_is_near_earth_surface(self):
+        head = self.head(1005)[0]
+        x, y, z = head[7], head[9], head[11]  # ECEF in 0.0001 m
+        radius = (x**2 + y**2 + z**2) ** 0.5 * 1e-4
+        self.assertTrue(6.3e6 < radius < 6.5e6, f"radius {radius:.0f} m off-Earth")
+
+    def test_1006_has_antenna_height(self):
+        head = self.head(1006)[0]
+        self.assertEqual(len(head), 13)  # 1005 fields + antenna height
+
+    def test_1007_antenna_descriptor_is_ascii(self):
+        head = self.head(1007)[0]
+        self.assertEqual(head[2], len(head[3]))  # counter matches string length
+        self.assertTrue(head[3].isprintable())
+
+    def test_1033_receiver_and_antenna_descriptors(self):
+        head = self.head(1033)[0]
+        # [type, refId, N, ant, setup, M, antSerial, I, rxType, J, rxFw, K, rxSerial]
+        self.assertEqual(head[2], len(head[3]))  # antenna descriptor
+        self.assertEqual(head[7], len(head[8]))  # receiver type descriptor
+        self.assertTrue(head[8], "receiver type descriptor empty")
+
+    def test_1013_announcements(self):
+        head, sat, _ = self.head(1013)
+        self.assertEqual(len(sat), head[4])  # Nm announcement sets
+        for msgId, sync, interval in sat:
+            self.assertTrue(1000 <= msgId <= 4095)
+
+    def test_1230_bias_count_matches_mask(self):
+        head, sat, _ = self.head(1230)
+        self.assertEqual(len(sat), head[3].count("1"))
+
+
 class TestLegacyRecordWidths(unittest.TestCase):
     """Per-satellite record widths must match the RTCM 10403.3 message tables.
 
