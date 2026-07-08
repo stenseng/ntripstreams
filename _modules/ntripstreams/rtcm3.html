@@ -1,0 +1,1124 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>ntripstreams.rtcm3 - ntripstreams 0.3.5</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=bca9b829" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f0f0f0;
+  --color-code-foreground: black;
+  --color-brand-primary: #1a6bb5;
+  --color-brand-content: #1a6bb5;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  --color-brand-primary: #5aa9e6;
+  --color-brand-content: #5aa9e6;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  --color-brand-primary: #5aa9e6;
+  --color-brand-content: #5aa9e6;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">ntripstreams 0.3.5</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  <span class="sidebar-brand-text">ntripstreams 0.3.5</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ntripstreams.html">ntripstreams</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for ntripstreams.rtcm3</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Fri May  7 11:15:55 2021</span>
+
+<span class="sd">@author: Lars Stenseng</span>
+<span class="sd">@mail: lars@stenseng.net</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">time</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bitstring</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bits</span><span class="p">,</span> <span class="n">pack</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_readfmt</span><span class="p">(</span><span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return *fmt* with ``=field`` labels and value assertions removed.</span>
+
+<span class="sd">    bitstring &gt;= 4.2 no longer accepts the ``token=name`` label syntax (e.g.</span>
+<span class="sd">    ``uint:12=refStationId``) nor the ``token=value`` assertion syntax (e.g.</span>
+<span class="sd">    ``uint:12=1004``) in ``readlist`` / ``unpack``. Those methods return</span>
+<span class="sd">    positional lists, and the message type is already dispatched via ``peek``,</span>
+<span class="sd">    so both forms were redundant here. ``pack`` still consumes the labelled</span>
+<span class="sd">    formats and is left untouched.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;=[A-Za-z0-9_]+&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Rtcm3">
+<a class="viewcode-back" href="../../ntripstreams.html#ntripstreams.Rtcm3">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Rtcm3</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Encode and decode RTCM 3 messages.</span>
+
+<span class="sd">    Provides frame-level helpers (:meth:`decodeRtcmFrame`,</span>
+<span class="sd">    :meth:`encodeRtcmFrame`) that handle the preamble and CRC, message-level</span>
+<span class="sd">    decoding of the legacy GPS/GLONASS observables (1001-1004, 1009-1012) and</span>
+<span class="sd">    the Multiple Signal Messages (MSM, 1071-1127), and lookups for message</span>
+<span class="sd">    descriptions, GNSS constellations and MSM signal types.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">fmt</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;readlist with ``=name`` labels stripped for bitstring &gt;= 4.2.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">readlist</span><span class="p">(</span><span class="n">_readfmt</span><span class="p">(</span><span class="n">fmt</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_up</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">fmt</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;unpack with ``=name`` labels stripped for bitstring &gt;= 4.2.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="n">_readfmt</span><span class="p">(</span><span class="n">fmt</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Rtcm3.mjd">
+<a class="viewcode-back" href="../../ntripstreams.html#ntripstreams.Rtcm3.mjd">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mjd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unixTimestamp</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a Unix timestamp to a Modified Julian Date (integer day).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        unixTimestamp : float</span>
+<span class="sd">            Seconds since the Unix epoch.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            The Modified Julian Date (whole days).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mjd</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">unixTimestamp</span> <span class="o">/</span> <span class="mf">86400.0</span> <span class="o">+</span> <span class="mf">40587.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mjd</span></div>
+
+
+<div class="viewcode-block" id="Rtcm3.msmConstellation">
+<a class="viewcode-back" href="../../ntripstreams.html#ntripstreams.Rtcm3.msmConstellation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">msmConstellation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messageType</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the GNSS constellation for an MSM message type.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        messageType : int</span>
+<span class="sd">            An MSM message number in the range 1071-1127.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Constellation name, e.g. ``&quot;GPS&quot;``, ``&quot;GLONASS&quot;``, ``&quot;GALILEO&quot;``,</span>
+<span class="sd">            ``&quot;SBAS&quot;``, ``&quot;QZSS&quot;`` or ``&quot;BEIDOU&quot;``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">constellation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msmConstellations</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">messageType</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">%</span> <span class="mi">100</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">constellation</span></div>
+
+
+<div class="viewcode-block" id="Rtcm3.constellation">
+<a class="viewcode-back" href="../../ntripstreams.html#ntripstreams.Rtcm3.constellation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constellation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messageType</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the GNSS constellation for any supported message type.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        messageType : int</span>
+<span class="sd">            An RTCM 3 message number.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Constellation name for legacy GPS (1001-1004), GLONASS</span>
+<span class="sd">            (1009-1012) and MSM (1071-1127) messages; ``&quot;GNSS&quot;`` for any other</span>
+<span class="sd">            message type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">messageType</span> <span class="o">&gt;=</span> <span class="mi">1001</span> <span class="ow">and</span> <span class="n">messageType</span> <span class="o">&lt;=</span> <span class="mi">1004</span><span class="p">:</span>
+            <span class="n">constellation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msmConstellations</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">messageType</span> <span class="o">&gt;=</span> <span class="mi">1009</span> <span class="ow">and</span> <span class="n">messageType</span> <span class="o">&lt;=</span> <span class="mi">1012</span><span class="p">:</span>
+            <span class="n">constellation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msmConstellations</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">messageType</span> <span class="o">&gt;=</span> <span class="mi">1071</span> <span class="ow">and</span> <span class="n">messageType</span> <span class="o">&lt;=</span> <span class="mi">1127</span><span class="p">:</span>
+            <span class="n">constellation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">msmConstellation</span><span class="p">(</span><span class="n">messageType</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">constellation</span> <span class="o">=</span> <span class="s2">&quot;GNSS&quot;</span>
+        <span class="k">return</span> <span class="n">constellation</span></div>
+
+
+<div class="viewcode-block" id="Rtcm3.msmSignalTypes">
+<a class="viewcode-back" href="../../ntripstreams.html#ntripstreams.Rtcm3.msmSignalTypes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">msmSignalTypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messageType</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">msmSignals</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve the signal-type codes selected by an MSM signal mask.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        messageType : int</span>
+<span class="sd">            An MSM message number in the range 1071-1127.</span>
+<span class="sd">        msmSignals : str</span>
+<span class="sd">            The 32-bit GNSS signal mask as a string of ``&quot;0&quot;``/``&quot;1&quot;``</span>
+<span class="sd">            characters (the ``gnssSignalMask`` header field).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list of str</span>
+<span class="sd">            RINEX-style signal codes (e.g. ``&quot;L1C&quot;``, ``&quot;L2W&quot;``) for each bit</span>
+<span class="sd">            set in the mask, in mask order.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">signals</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__msmSignalTypes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">msmConstellation</span><span class="p">(</span><span class="n">messageType</span><span class="p">)][</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mask</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">msmSignals</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mask</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">signals</span></div>
+
+
+<div class="viewcode-block" id="Rtcm3.encodeRtcmFrame">
+<a class="viewcode-back" href="../../ntripstreams.html#ntripstreams.Rtcm3.encodeRtcmFrame">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">encodeRtcmFrame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messageType</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dataDict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encode an RTCM 3 message into a frame.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            Currently only message type 1029 is implemented, and the returned</span>
+<span class="sd">            frame does not yet include the preamble, length and CRC wrapper.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        messageType : int</span>
+<span class="sd">            RTCM 3 message number to encode.</span>
+<span class="sd">        dataDict : dict</span>
+<span class="sd">            Field values for the message; missing fields fall back to defaults.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bitstring.BitStream</span>
+<span class="sd">            The encoded message.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encodeRtcmMessage</span><span class="p">(</span><span class="n">messageType</span><span class="p">,</span> <span class="n">dataDict</span><span class="p">)</span>
+        <span class="n">rtcmFrame</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="k">return</span> <span class="n">rtcmFrame</span></div>
+
+
+<div class="viewcode-block" id="Rtcm3.decodeRtcmFrame">
+<a class="viewcode-back" href="../../ntripstreams.html#ntripstreams.Rtcm3.decodeRtcmFrame">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decodeRtcmFrame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rtcmFrame</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decode a complete RTCM 3 frame.</span>
+
+<span class="sd">        Strips the 24-bit header/preamble and the trailing 24-bit CRC, then</span>
+<span class="sd">        decodes the payload with :meth:`decodeRtcmMessage`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rtcmFrame : bitstring.BitStream</span>
+<span class="sd">            A complete, CRC-validated RTCM 3 frame.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple of (int, list)</span>
+<span class="sd">            The message type and its decoded data; see</span>
+<span class="sd">            :meth:`decodeRtcmMessage` for the data layout.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rtcmPayload</span> <span class="o">=</span> <span class="n">rtcmFrame</span><span class="p">[</span><span class="mi">24</span><span class="p">:</span><span class="o">-</span><span class="mi">24</span><span class="p">]</span>
+        <span class="n">messageType</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decodeRtcmMessage</span><span class="p">(</span><span class="n">rtcmPayload</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">messageType</span><span class="p">,</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="Rtcm3.encodeRtcmMessage">
+<a class="viewcode-back" href="../../ntripstreams.html#ntripstreams.Rtcm3.encodeRtcmMessage">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">encodeRtcmMessage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messageType</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dataDict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encode an RTCM 3 message payload.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            Only message type 1029 (Unicode Text String) is implemented;</span>
+<span class="sd">            other message types return ``None``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        messageType : int</span>
+<span class="sd">            RTCM 3 message number to encode.</span>
+<span class="sd">        dataDict : dict</span>
+<span class="sd">            Field values for the message; missing fields fall back to defaults.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bitstring.BitStream or None</span>
+<span class="sd">            The packed message payload, or ``None`` for unimplemented types.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">messageType</span> <span class="o">==</span> <span class="mi">1029</span><span class="p">:</span>
+            <span class="n">utfStr</span> <span class="o">=</span> <span class="s2">&quot;Default string&quot;</span>
+            <span class="n">default</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;refStationId&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="s2">&quot;mjd&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mjd</span><span class="p">(</span><span class="n">time</span><span class="p">()),</span>
+                <span class="s2">&quot;utc&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="p">()</span> <span class="o">%</span> <span class="mi">86400</span><span class="p">),</span>
+                <span class="s2">&quot;utfChars&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="s2">&quot;charBytes&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="s2">&quot;string&quot;</span><span class="p">:</span> <span class="n">utfStr</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">dataDict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">default</span><span class="p">}</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;utfChars&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">])</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;charBytes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;string&quot;</span><span class="p">])</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="n">pack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__msg1029</span><span class="p">,</span> <span class="o">**</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">message</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__decodeMsmHeader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decode the common MSM header, including the satellite/cell masks.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        message : bitstring.BitStream</span>
+<span class="sd">            The message payload, positioned at the start of the header.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple of (list, int, int, int)</span>
+<span class="sd">            The header fields, the number of satellites, the number of signals</span>
+<span class="sd">            and the number of cells (``numSats * numSignals`` selected cells).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msgMsmHead</span><span class="p">)</span>
+        <span class="n">numSats</span> <span class="o">=</span> <span class="n">Bits</span><span class="p">(</span><span class="nb">bin</span><span class="o">=</span><span class="n">head</span><span class="p">[</span><span class="mi">9</span><span class="p">])</span><span class="o">.</span><span class="n">bin</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+        <span class="n">numSignals</span> <span class="o">=</span> <span class="n">Bits</span><span class="p">(</span><span class="nb">bin</span><span class="o">=</span><span class="n">head</span><span class="p">[</span><span class="mi">10</span><span class="p">])</span><span class="o">.</span><span class="n">bin</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+        <span class="n">cellMask</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;bin:</span><span class="si">{</span><span class="n">numSats</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">numSignals</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">head</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cellMask</span><span class="p">)</span>
+        <span class="n">numCells</span> <span class="o">=</span> <span class="n">Bits</span><span class="p">(</span><span class="nb">bin</span><span class="o">=</span><span class="n">head</span><span class="p">[</span><span class="mi">11</span><span class="p">])</span><span class="o">.</span><span class="n">bin</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">head</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1081</span> <span class="ow">and</span> <span class="n">head</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">1087</span><span class="p">:</span>
+            <span class="n">glonassEpoch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_up</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msgMsmHeadGlonassEpoch</span><span class="p">)</span>
+            <span class="n">head</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">glonassEpoch</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">head</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">glonassEpoch</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">head</span><span class="p">,</span> <span class="n">numSats</span><span class="p">,</span> <span class="n">numSignals</span><span class="p">,</span> <span class="n">numCells</span>
+
+<div class="viewcode-block" id="Rtcm3.decodeRtcmMessage">
+<a class="viewcode-back" href="../../ntripstreams.html#ntripstreams.Rtcm3.decodeRtcmMessage">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decodeRtcmMessage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decode an RTCM 3 message payload (without preamble or CRC).</span>
+
+<span class="sd">        Fully decodes the legacy GPS/GLONASS observables (1001-1004,</span>
+<span class="sd">        1009-1012) and the Multiple Signal Messages (1071-1127). Other message</span>
+<span class="sd">        types are recognised but not field-decoded.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        message : bitstring.BitStream</span>
+<span class="sd">            The message payload (frame with the 24-bit header and 24-bit CRC</span>
+<span class="sd">            removed).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple of (int, list)</span>
+<span class="sd">            ``(messageType, [head, satData, signalData])`` where ``head`` is</span>
+<span class="sd">            the list of decoded header fields (or the string</span>
+<span class="sd">            ``&quot;Message type not implemented&quot;``), and ``satData`` /</span>
+<span class="sd">            ``signalData`` are column-wise lists of the per-satellite and</span>
+<span class="sd">            per-signal fields (empty for non-observable messages).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">satData</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">signalData</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">messageType</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">peek</span><span class="p">(</span><span class="s2">&quot;uint:12&quot;</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Decoding message type </span><span class="si">{</span><span class="n">messageType</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">messageType</span> <span class="o">==</span> <span class="mi">1001</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1001Head</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">head</span><span class="p">[</span><span class="mi">4</span><span class="p">]):</span>
+                <span class="n">satData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1001Obs</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">messageType</span> <span class="o">==</span> <span class="mi">1002</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1002Head</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">head</span><span class="p">[</span><span class="mi">4</span><span class="p">]):</span>
+                <span class="n">satData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1002Obs</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">messageType</span> <span class="o">==</span> <span class="mi">1003</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1003Head</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">head</span><span class="p">[</span><span class="mi">4</span><span class="p">]):</span>
+                <span class="n">satData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1003Obs</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">messageType</span> <span class="o">==</span> <span class="mi">1004</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1004Head</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">head</span><span class="p">[</span><span class="mi">4</span><span class="p">]):</span>
+                <span class="n">satData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1004Obs</span><span class="p">))</span>
+
+        <span class="k">elif</span> <span class="n">messageType</span> <span class="o">==</span> <span class="mi">1009</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1009Head</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">head</span><span class="p">[</span><span class="mi">4</span><span class="p">]):</span>
+                <span class="n">satData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1009Obs</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">messageType</span> <span class="o">==</span> <span class="mi">1010</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1010Head</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">head</span><span class="p">[</span><span class="mi">4</span><span class="p">]):</span>
+                <span class="n">satData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1010Obs</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">messageType</span> <span class="o">==</span> <span class="mi">1011</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1011Head</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">head</span><span class="p">[</span><span class="mi">4</span><span class="p">]):</span>
+                <span class="n">satData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1011Obs</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">messageType</span> <span class="o">==</span> <span class="mi">1012</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1012Head</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">head</span><span class="p">[</span><span class="mi">4</span><span class="p">]):</span>
+                <span class="n">satData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1012Obs</span><span class="p">))</span>
+
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">messageType</span> <span class="o">&gt;=</span> <span class="mi">1071</span> <span class="ow">and</span> <span class="n">messageType</span> <span class="o">&lt;=</span> <span class="mi">1077</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">messageType</span> <span class="o">&gt;=</span> <span class="mi">1081</span> <span class="ow">and</span> <span class="n">messageType</span> <span class="o">&lt;=</span> <span class="mi">1087</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">messageType</span> <span class="o">&gt;=</span> <span class="mi">1091</span> <span class="ow">and</span> <span class="n">messageType</span> <span class="o">&lt;=</span> <span class="mi">1097</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">messageType</span> <span class="o">&gt;=</span> <span class="mi">1101</span> <span class="ow">and</span> <span class="n">messageType</span> <span class="o">&lt;=</span> <span class="mi">1107</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">messageType</span> <span class="o">&gt;=</span> <span class="mi">1111</span> <span class="ow">and</span> <span class="n">messageType</span> <span class="o">&lt;=</span> <span class="mi">1117</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">messageType</span> <span class="o">&gt;=</span> <span class="mi">1121</span> <span class="ow">and</span> <span class="n">messageType</span> <span class="o">&lt;=</span> <span class="mi">1127</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">head</span><span class="p">,</span> <span class="n">numSats</span><span class="p">,</span> <span class="n">numSignals</span><span class="p">,</span> <span class="n">numCells</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__decodeMsmHeader</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="p">(</span><span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="p">(</span><span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msgMsm123Sat</span><span class="p">:</span>
+                    <span class="n">satData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">numSats</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">obs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">6</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msgMsm46Sat</span><span class="p">:</span>
+                    <span class="n">satData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">numSats</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">obs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">5</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">7</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msgMsm57Sat</span><span class="p">:</span>
+                    <span class="n">satData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">numSats</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">obs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="n">satData</span> <span class="o">=</span> <span class="p">[[</span><span class="n">row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">satData</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">satData</span><span class="p">[</span><span class="mi">0</span><span class="p">]))]</span>
+
+            <span class="k">if</span> <span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msgMsm1Signal</span><span class="p">:</span>
+                    <span class="n">signalData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">numCells</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">obs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msgMsm2Signal</span><span class="p">:</span>
+                    <span class="n">signalData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">numCells</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">obs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msgMsm3Signal</span><span class="p">:</span>
+                    <span class="n">signalData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">numCells</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">obs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msgMsm4Signal</span><span class="p">:</span>
+                    <span class="n">signalData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">numCells</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">obs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">5</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msgMsm5Signal</span><span class="p">:</span>
+                    <span class="n">signalData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">numCells</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">obs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">6</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msgMsm6Signal</span><span class="p">:</span>
+                    <span class="n">signalData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">numCells</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">obs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">messageType</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">7</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msgMsm7Signal</span><span class="p">:</span>
+                    <span class="n">signalData</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">numCells</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">obs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="n">signalData</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">signalData</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signalData</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">messageType</span> <span class="o">==</span> <span class="mi">1029</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rl</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__msg1029</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="s2">&quot;Message type not implemented&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">head</span><span class="p">,</span> <span class="n">satData</span><span class="p">,</span> <span class="n">signalData</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">messageType</span><span class="p">,</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="Rtcm3.messageDescription">
+<a class="viewcode-back" href="../../ntripstreams.html#ntripstreams.Rtcm3.messageDescription">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">messageDescription</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messageType</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a human-readable description for an RTCM 3 message type.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        messageType : int</span>
+<span class="sd">            RTCM 3 message number.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The message description, or a &quot;currently not implemented&quot; note for</span>
+<span class="sd">            unknown message types.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">messageType</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">messageDescriptionText</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">messageDescriptionText</span><span class="p">[</span><span class="n">messageType</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Message type </span><span class="si">{</span><span class="n">messageType</span><span class="si">}</span><span class="s2"> currently not implemented&quot;</span></div>
+
+
+    <span class="n">messageDescriptionText</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="mi">1001</span><span class="p">:</span> <span class="s2">&quot;L1-Only GPS RTK Observables&quot;</span><span class="p">,</span>
+        <span class="mi">1002</span><span class="p">:</span> <span class="s2">&quot;Extended L1-Only GPS RTK Observables&quot;</span><span class="p">,</span>
+        <span class="mi">1003</span><span class="p">:</span> <span class="s2">&quot;L1 &amp; L2 GPS RTK Observables&quot;</span><span class="p">,</span>
+        <span class="mi">1004</span><span class="p">:</span> <span class="s2">&quot;Extended L1 &amp; L2 GPS RTK Observables&quot;</span><span class="p">,</span>
+        <span class="mi">1005</span><span class="p">:</span> <span class="s2">&quot;Stationary RTK Reference Station ARP&quot;</span><span class="p">,</span>
+        <span class="mi">1006</span><span class="p">:</span> <span class="s2">&quot;Stationary RTK Reference Station ARP with Antenna Height&quot;</span><span class="p">,</span>
+        <span class="mi">1007</span><span class="p">:</span> <span class="s2">&quot;Antenna Descriptor&quot;</span><span class="p">,</span>
+        <span class="mi">1008</span><span class="p">:</span> <span class="s2">&quot;Antenna Descriptor &amp; Serial Number&quot;</span><span class="p">,</span>
+        <span class="mi">1009</span><span class="p">:</span> <span class="s2">&quot;L1-Only GLONASS RTK Observables&quot;</span><span class="p">,</span>
+        <span class="mi">1010</span><span class="p">:</span> <span class="s2">&quot;Extended L1-Only GLONASS RTK Observables&quot;</span><span class="p">,</span>
+        <span class="mi">1011</span><span class="p">:</span> <span class="s2">&quot;L1 &amp; L2 GLONASS RTK Observables&quot;</span><span class="p">,</span>
+        <span class="mi">1012</span><span class="p">:</span> <span class="s2">&quot;Extended L1 &amp; L2 GLONASS RTK Observables&quot;</span><span class="p">,</span>
+        <span class="mi">1013</span><span class="p">:</span> <span class="s2">&quot;System Parameters&quot;</span><span class="p">,</span>
+        <span class="mi">1014</span><span class="p">:</span> <span class="s2">&quot;Network Auxiliary Station Data&quot;</span><span class="p">,</span>
+        <span class="mi">1015</span><span class="p">:</span> <span class="s2">&quot;GPS Ionospheric Correction Differences&quot;</span><span class="p">,</span>
+        <span class="mi">1016</span><span class="p">:</span> <span class="s2">&quot;GPS Geometric Correction Differences&quot;</span><span class="p">,</span>
+        <span class="mi">1017</span><span class="p">:</span> <span class="s2">&quot;GPS Combined Geometric and Ionospheric Correction &quot;</span> <span class="o">+</span> <span class="s2">&quot;Differences&quot;</span><span class="p">,</span>
+        <span class="mi">1018</span><span class="p">:</span> <span class="s2">&quot;RESERVED for Alternative Ionospheric Correction Difference &quot;</span> <span class="o">+</span> <span class="s2">&quot;Message&quot;</span><span class="p">,</span>
+        <span class="mi">1019</span><span class="p">:</span> <span class="s2">&quot;GPS Ephemerides&quot;</span><span class="p">,</span>
+        <span class="mi">1020</span><span class="p">:</span> <span class="s2">&quot;GLONASS Ephemerides&quot;</span><span class="p">,</span>
+        <span class="mi">1021</span><span class="p">:</span> <span class="s2">&quot;Helmert / Abridged Molodenski Transformation Parameters&quot;</span><span class="p">,</span>
+        <span class="mi">1022</span><span class="p">:</span> <span class="s2">&quot;Molodenski-Badekas Transformation Parameters&quot;</span><span class="p">,</span>
+        <span class="mi">1023</span><span class="p">:</span> <span class="s2">&quot;Residuals, Ellipsoidal Grid Representation&quot;</span><span class="p">,</span>
+        <span class="mi">1024</span><span class="p">:</span> <span class="s2">&quot;Residuals, Plane Grid Representation&quot;</span><span class="p">,</span>
+        <span class="mi">1025</span><span class="p">:</span> <span class="s2">&quot;Projection Parameters, Projection Types other than &quot;</span>
+        <span class="o">+</span> <span class="s2">&quot;Lambert Conic Conformal (2 SP) and Oblique Mercator&quot;</span><span class="p">,</span>
+        <span class="mi">1026</span><span class="p">:</span> <span class="s2">&quot;Projection Parameters, Projection Type LCC2SP &quot;</span>
+        <span class="o">+</span> <span class="s2">&quot;(Lambert Conic Conformal (2 SP))&quot;</span><span class="p">,</span>
+        <span class="mi">1027</span><span class="p">:</span> <span class="s2">&quot;Projection Parameters, Projection Type OM &quot;</span> <span class="o">+</span> <span class="s2">&quot;(Oblique Mercator)&quot;</span><span class="p">,</span>
+        <span class="mi">1028</span><span class="p">:</span> <span class="s2">&quot;(Reserved for Global to Plate-Fixed Transformation)&quot;</span><span class="p">,</span>
+        <span class="mi">1029</span><span class="p">:</span> <span class="s2">&quot;Unicode Text String&quot;</span><span class="p">,</span>
+        <span class="mi">1030</span><span class="p">:</span> <span class="s2">&quot;GPS Network RTK Residual Message&quot;</span><span class="p">,</span>
+        <span class="mi">1031</span><span class="p">:</span> <span class="s2">&quot;GLONASS Network RTK Residual Message&quot;</span><span class="p">,</span>
+        <span class="mi">1032</span><span class="p">:</span> <span class="s2">&quot;Physical Reference Station Position Message&quot;</span><span class="p">,</span>
+        <span class="mi">1033</span><span class="p">:</span> <span class="s2">&quot;Receiver and Antenna Descriptors&quot;</span><span class="p">,</span>
+        <span class="mi">1034</span><span class="p">:</span> <span class="s2">&quot;GPS Network FKP Gradient&quot;</span><span class="p">,</span>
+        <span class="mi">1035</span><span class="p">:</span> <span class="s2">&quot;GLONASS Network FKP Gradient&quot;</span><span class="p">,</span>
+        <span class="mi">1037</span><span class="p">:</span> <span class="s2">&quot;GLONASS Ionospheric Correction Differences&quot;</span><span class="p">,</span>
+        <span class="mi">1038</span><span class="p">:</span> <span class="s2">&quot;GLONASS Geometric Correction Differences&quot;</span><span class="p">,</span>
+        <span class="mi">1039</span><span class="p">:</span> <span class="s2">&quot;GLONASS Combined Geometric and Ionospheric Correction &quot;</span> <span class="o">+</span> <span class="s2">&quot;Differences&quot;</span><span class="p">,</span>
+        <span class="mi">1042</span><span class="p">:</span> <span class="s2">&quot;BDS Satellite Ephemeris Data&quot;</span><span class="p">,</span>
+        <span class="mi">1044</span><span class="p">:</span> <span class="s2">&quot;QZSS Ephemerides&quot;</span><span class="p">,</span>
+        <span class="mi">1045</span><span class="p">:</span> <span class="s2">&quot;Galileo F/NAV Satellite Ephemeris Data&quot;</span><span class="p">,</span>
+        <span class="mi">1046</span><span class="p">:</span> <span class="s2">&quot;Galileo I/NAV Satellite Ephemeris Data&quot;</span><span class="p">,</span>
+        <span class="mi">1057</span><span class="p">:</span> <span class="s2">&quot;SSR GPS Orbit Correction&quot;</span><span class="p">,</span>
+        <span class="mi">1058</span><span class="p">:</span> <span class="s2">&quot;SSR GPS Clock Correction&quot;</span><span class="p">,</span>
+        <span class="mi">1059</span><span class="p">:</span> <span class="s2">&quot;SSR GPS Code Bias&quot;</span><span class="p">,</span>
+        <span class="mi">1060</span><span class="p">:</span> <span class="s2">&quot;SSR GPS Combined Orbit and Clock Corrections&quot;</span><span class="p">,</span>
+        <span class="mi">1061</span><span class="p">:</span> <span class="s2">&quot;SSR GPS URA&quot;</span><span class="p">,</span>
+        <span class="mi">1062</span><span class="p">:</span> <span class="s2">&quot;SSR GPS High Rate Clock Correction&quot;</span><span class="p">,</span>
+        <span class="mi">1063</span><span class="p">:</span> <span class="s2">&quot;SSR GLONASS Orbit Correction&quot;</span><span class="p">,</span>
+        <span class="mi">1064</span><span class="p">:</span> <span class="s2">&quot;SSR GLONASS Clock Correction&quot;</span><span class="p">,</span>
+        <span class="mi">1065</span><span class="p">:</span> <span class="s2">&quot;SSR GLONASS Code Bias&quot;</span><span class="p">,</span>
+        <span class="mi">1066</span><span class="p">:</span> <span class="s2">&quot;SSR GLONASS Combined Orbit and Clock Corrections&quot;</span><span class="p">,</span>
+        <span class="mi">1067</span><span class="p">:</span> <span class="s2">&quot;SSR GLONASS URA&quot;</span><span class="p">,</span>
+        <span class="mi">1068</span><span class="p">:</span> <span class="s2">&quot;SSR GLONASS High Rate Clock Correction&quot;</span><span class="p">,</span>
+        <span class="mi">1070</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1071</span><span class="p">:</span> <span class="s2">&quot;GPS MSM1&quot;</span><span class="p">,</span>
+        <span class="mi">1072</span><span class="p">:</span> <span class="s2">&quot;GPS MSM2&quot;</span><span class="p">,</span>
+        <span class="mi">1073</span><span class="p">:</span> <span class="s2">&quot;GPS MSM3&quot;</span><span class="p">,</span>
+        <span class="mi">1074</span><span class="p">:</span> <span class="s2">&quot;GPS MSM4&quot;</span><span class="p">,</span>
+        <span class="mi">1075</span><span class="p">:</span> <span class="s2">&quot;GPS MSM5&quot;</span><span class="p">,</span>
+        <span class="mi">1076</span><span class="p">:</span> <span class="s2">&quot;GPS MSM6&quot;</span><span class="p">,</span>
+        <span class="mi">1077</span><span class="p">:</span> <span class="s2">&quot;GPS MSM7&quot;</span><span class="p">,</span>
+        <span class="mi">1078</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1079</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1080</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1081</span><span class="p">:</span> <span class="s2">&quot;GLONASS MSM1&quot;</span><span class="p">,</span>
+        <span class="mi">1082</span><span class="p">:</span> <span class="s2">&quot;GLONASS MSM2&quot;</span><span class="p">,</span>
+        <span class="mi">1083</span><span class="p">:</span> <span class="s2">&quot;GLONASS MSM3&quot;</span><span class="p">,</span>
+        <span class="mi">1084</span><span class="p">:</span> <span class="s2">&quot;GLONASS MSM4&quot;</span><span class="p">,</span>
+        <span class="mi">1085</span><span class="p">:</span> <span class="s2">&quot;GLONASS MSM5&quot;</span><span class="p">,</span>
+        <span class="mi">1086</span><span class="p">:</span> <span class="s2">&quot;GLONASS MSM6&quot;</span><span class="p">,</span>
+        <span class="mi">1087</span><span class="p">:</span> <span class="s2">&quot;GLONASS MSM7&quot;</span><span class="p">,</span>
+        <span class="mi">1088</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1089</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1090</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1091</span><span class="p">:</span> <span class="s2">&quot;Galileo MSM1&quot;</span><span class="p">,</span>
+        <span class="mi">1092</span><span class="p">:</span> <span class="s2">&quot;Galileo MSM2&quot;</span><span class="p">,</span>
+        <span class="mi">1093</span><span class="p">:</span> <span class="s2">&quot;Galileo MSM3&quot;</span><span class="p">,</span>
+        <span class="mi">1094</span><span class="p">:</span> <span class="s2">&quot;Galileo MSM4&quot;</span><span class="p">,</span>
+        <span class="mi">1095</span><span class="p">:</span> <span class="s2">&quot;Galileo MSM5&quot;</span><span class="p">,</span>
+        <span class="mi">1096</span><span class="p">:</span> <span class="s2">&quot;Galileo MSM6&quot;</span><span class="p">,</span>
+        <span class="mi">1097</span><span class="p">:</span> <span class="s2">&quot;Galileo MSM7&quot;</span><span class="p">,</span>
+        <span class="mi">1098</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1099</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1100</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1101</span><span class="p">:</span> <span class="s2">&quot;SBAS MSM1&quot;</span><span class="p">,</span>
+        <span class="mi">1102</span><span class="p">:</span> <span class="s2">&quot;SBAS MSM2&quot;</span><span class="p">,</span>
+        <span class="mi">1103</span><span class="p">:</span> <span class="s2">&quot;SBAS MSM3&quot;</span><span class="p">,</span>
+        <span class="mi">1104</span><span class="p">:</span> <span class="s2">&quot;SBAS MSM4&quot;</span><span class="p">,</span>
+        <span class="mi">1105</span><span class="p">:</span> <span class="s2">&quot;SBAS MSM5&quot;</span><span class="p">,</span>
+        <span class="mi">1106</span><span class="p">:</span> <span class="s2">&quot;SBAS MSM6&quot;</span><span class="p">,</span>
+        <span class="mi">1107</span><span class="p">:</span> <span class="s2">&quot;SBAS MSM7&quot;</span><span class="p">,</span>
+        <span class="mi">1108</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1109</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1110</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1111</span><span class="p">:</span> <span class="s2">&quot;QZSS MSM1&quot;</span><span class="p">,</span>
+        <span class="mi">1112</span><span class="p">:</span> <span class="s2">&quot;QZSS MSM2&quot;</span><span class="p">,</span>
+        <span class="mi">1113</span><span class="p">:</span> <span class="s2">&quot;QZSS MSM3&quot;</span><span class="p">,</span>
+        <span class="mi">1114</span><span class="p">:</span> <span class="s2">&quot;QZSS MSM4&quot;</span><span class="p">,</span>
+        <span class="mi">1115</span><span class="p">:</span> <span class="s2">&quot;QZSS MSM5&quot;</span><span class="p">,</span>
+        <span class="mi">1116</span><span class="p">:</span> <span class="s2">&quot;QZSS MSM6&quot;</span><span class="p">,</span>
+        <span class="mi">1117</span><span class="p">:</span> <span class="s2">&quot;QZSS MSM7&quot;</span><span class="p">,</span>
+        <span class="mi">1118</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1119</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1120</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1121</span><span class="p">:</span> <span class="s2">&quot;BeiDou MSM1&quot;</span><span class="p">,</span>
+        <span class="mi">1122</span><span class="p">:</span> <span class="s2">&quot;BeiDou MSM2&quot;</span><span class="p">,</span>
+        <span class="mi">1123</span><span class="p">:</span> <span class="s2">&quot;BeiDou MSM3&quot;</span><span class="p">,</span>
+        <span class="mi">1124</span><span class="p">:</span> <span class="s2">&quot;BeiDou MSM4&quot;</span><span class="p">,</span>
+        <span class="mi">1125</span><span class="p">:</span> <span class="s2">&quot;BeiDou MSM5&quot;</span><span class="p">,</span>
+        <span class="mi">1126</span><span class="p">:</span> <span class="s2">&quot;BeiDou MSM6&quot;</span><span class="p">,</span>
+        <span class="mi">1127</span><span class="p">:</span> <span class="s2">&quot;BeiDou MSM7&quot;</span><span class="p">,</span>
+        <span class="mi">1128</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1129</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1130</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM&quot;</span><span class="p">,</span>
+        <span class="mi">1131</span><span class="p">:</span> <span class="s2">&quot;IRNSS MSM1 (Experimental, not implemented)&quot;</span><span class="p">,</span>
+        <span class="mi">1132</span><span class="p">:</span> <span class="s2">&quot;IRNSS MSM2 (Experimental, not implemented)&quot;</span><span class="p">,</span>
+        <span class="mi">1133</span><span class="p">:</span> <span class="s2">&quot;IRNSS MSM3 (Experimental, not implemented)&quot;</span><span class="p">,</span>
+        <span class="mi">1134</span><span class="p">:</span> <span class="s2">&quot;IRNSS MSM4 (Experimental, not implemented)&quot;</span><span class="p">,</span>
+        <span class="mi">1135</span><span class="p">:</span> <span class="s2">&quot;IRNSS MSM5 (Experimental, not implemented)&quot;</span><span class="p">,</span>
+        <span class="mi">1136</span><span class="p">:</span> <span class="s2">&quot;IRNSS MSM6 (Experimental, not implemented)&quot;</span><span class="p">,</span>
+        <span class="mi">1137</span><span class="p">:</span> <span class="s2">&quot;IRNSS MSM7 (Experimental, not implemented)&quot;</span><span class="p">,</span>
+        <span class="mi">1138</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM (Experimental)&quot;</span><span class="p">,</span>
+        <span class="mi">1139</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM (Experimental)&quot;</span><span class="p">,</span>
+        <span class="mi">1140</span><span class="p">:</span> <span class="s2">&quot;Reserved MSM (Experimental)&quot;</span><span class="p">,</span>
+        <span class="mi">1230</span><span class="p">:</span> <span class="s2">&quot;GLONASS L1 and L2 Code-Phase Biases&quot;</span><span class="p">,</span>
+        <span class="c1"># 4001-4095: &quot;Proprietary Messages&quot;</span>
+    <span class="p">}</span>
+
+    <span class="n">__framePreample</span> <span class="o">=</span> <span class="n">Bits</span><span class="p">(</span><span class="nb">bin</span><span class="o">=</span><span class="s2">&quot;0b11010011&quot;</span><span class="p">)</span>
+    <span class="n">__frameHeaderFormat</span> <span class="o">=</span> <span class="s2">&quot;bin:8, pad:6, uint:10, uint:12&quot;</span>
+    <span class="n">__frameFormat</span> <span class="o">=</span> <span class="s2">&quot;bin:8, pad:6, uint:10&quot;</span>
+
+    <span class="c1"># GPS messages</span>
+    <span class="n">__msg1001_4Head</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;uint:12=refStationId, uint:30=tow, bool=syncGNSSFlag, &quot;</span>
+        <span class="s2">&quot;uint:5=numSignalsObs, bool=divFreeSmootFlag, bin:3=smoothInterval&quot;</span>
+    <span class="p">)</span>
+    <span class="n">__msg1001Head</span> <span class="o">=</span> <span class="s2">&quot;uint:12=1001, &quot;</span> <span class="o">+</span> <span class="n">__msg1001_4Head</span>
+    <span class="n">__msg1002Head</span> <span class="o">=</span> <span class="s2">&quot;uint:12=1002, &quot;</span> <span class="o">+</span> <span class="n">__msg1001_4Head</span>
+    <span class="n">__msg1003Head</span> <span class="o">=</span> <span class="s2">&quot;uint:12=1003, &quot;</span> <span class="o">+</span> <span class="n">__msg1001_4Head</span>
+    <span class="n">__msg1004Head</span> <span class="o">=</span> <span class="s2">&quot;uint:12=1004, &quot;</span> <span class="o">+</span> <span class="n">__msg1001_4Head</span>
+    <span class="n">__msg1001Obs</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;uint:6=satId, bool=l1CodeFlag, uint:24=l1PseudoRange, &quot;</span>
+        <span class="s2">&quot;int:20=l1PhaserangeL1PseudorangeDiff, uint:7=l1LockTimeIndicator&quot;</span>
+    <span class="p">)</span>
+    <span class="n">__msg1002Obs</span> <span class="o">=</span> <span class="n">__msg1001Obs</span> <span class="o">+</span> <span class="s2">&quot;, uint:8=l1PseudorangeAmbiguity, uint:8=l1CNR&quot;</span>
+    <span class="n">__msg1003Obs</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">__msg1001Obs</span> <span class="o">+</span> <span class="s2">&quot;, uint:2=l2CodeFlag, int:14=l2L1PseudorangeDiff,&quot;</span>
+        <span class="s2">&quot;int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator&quot;</span>
+    <span class="p">)</span>
+    <span class="n">__msg1004Obs</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">__msg1002Obs</span> <span class="o">+</span> <span class="s2">&quot;, uint:2=l2CodeFlag, int:14=l2L1PseudorangeDiff,&quot;</span>
+        <span class="s2">&quot;int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator, &quot;</span>
+        <span class="s2">&quot;uint:8=l2CNR&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># GLONASS messages</span>
+    <span class="n">__msg1009_12Head</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;uint:12=refStationId, uint:27=epochTime, bool=syncGNSSFlag, &quot;</span>
+        <span class="s2">&quot;uint:5=numSignalsObs, bool=divFreeSmootFlag, bin:3=smoothInterval&quot;</span>
+    <span class="p">)</span>
+    <span class="n">__msg1009Head</span> <span class="o">=</span> <span class="s2">&quot;uint:12=1009, &quot;</span> <span class="o">+</span> <span class="n">__msg1009_12Head</span>
+    <span class="n">__msg1010Head</span> <span class="o">=</span> <span class="s2">&quot;uint:12=1010, &quot;</span> <span class="o">+</span> <span class="n">__msg1009_12Head</span>
+    <span class="n">__msg1011Head</span> <span class="o">=</span> <span class="s2">&quot;uint:12=1011, &quot;</span> <span class="o">+</span> <span class="n">__msg1009_12Head</span>
+    <span class="n">__msg1012Head</span> <span class="o">=</span> <span class="s2">&quot;uint:12=1012, &quot;</span> <span class="o">+</span> <span class="n">__msg1009_12Head</span>
+    <span class="n">__msg1009Obs</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;uint:6=satId, bool=codeFlag, uint:5=freqChannelnum, uint:25=l1Pseudorange, &quot;</span>
+        <span class="s2">&quot;int:20=l1PhaserangeL1PseudorangeDiff, uint:7=l1LockTimeIndicator&quot;</span>
+    <span class="p">)</span>
+    <span class="n">__msg1010Obs</span> <span class="o">=</span> <span class="n">__msg1009Obs</span> <span class="o">+</span> <span class="s2">&quot;, uint:7=l1PseudorangeAmbiguity, uint:8=l1CNR&quot;</span>
+    <span class="n">__msg1011Obs</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">__msg1009Obs</span> <span class="o">+</span> <span class="s2">&quot;, uint:2=l2CodeFlag, int:14=l2L1PseudorangeDiff,&quot;</span>
+        <span class="s2">&quot;int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator&quot;</span>
+    <span class="p">)</span>
+    <span class="n">__msg1012Obs</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">__msg1010Obs</span> <span class="o">+</span> <span class="s2">&quot;, uint:2=l2CodeFlag, int:14=l2L1PseudorangeDiff,&quot;</span>
+        <span class="s2">&quot;int:20=l2PhaserangeL1PseudorangeDiff, uint:7=l2LockTimeIndicator, &quot;</span>
+        <span class="s2">&quot;uint:8=l2CNR&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Other messages</span>
+    <span class="n">__msg1029</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;uint:12=1029, uint:12=refStationId, uint:16=mjd, &quot;</span>
+        <span class="s2">&quot;uint:17=utc, uint:7=utfChars, uint:8=charBytes, &quot;</span>
+        <span class="s2">&quot;bytes=string&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># MSM messages</span>
+    <span class="n">__msgMsmHead</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;uint:12=messageType, uint:12=refStationId, uint:30=gnssEpochTime, &quot;</span>
+        <span class="s2">&quot;bool=multiMessageFlag, uint:3=iods, pad:7, uint:2=clockSteringIndicator, &quot;</span>
+        <span class="s2">&quot;uint:2=extClockIndicator, bool=divFreeSmootFlag, bin:3=smoothInterval, &quot;</span>
+        <span class="s2">&quot;bin:64=gnssSatMask, bin:32=gnssSignalMask&quot;</span>
+    <span class="p">)</span>
+    <span class="n">__msgMsmHeadGlonassEpoch</span> <span class="o">=</span> <span class="s2">&quot;pad:24, uint:3=dayOfWeek, uint:27=gnssEpochTime&quot;</span>
+    <span class="n">__msgMsm123Sat</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;uint:10=roughRangeMod1ms&quot;</span><span class="p">]</span>
+    <span class="n">__msgMsm46Sat</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;uint:8=numIntMsRoughRange&quot;</span><span class="p">,</span> <span class="s2">&quot;uint:10=roughRangeMod1ms&quot;</span><span class="p">]</span>
+    <span class="n">__msgMsm57Sat</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;uint:8=numIntMsRoughRange&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;uint:4=extSatInfo&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;uint:10=roughRangeMod1ms&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;int:14=roughPhaseRangeRate&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">__msgMsm1Signal</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;int:15=signalFinePseudorange&quot;</span><span class="p">]</span>
+    <span class="n">__msgMsm2Signal</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;int:22=signalFinePhaserange&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;uint:4=phaserangeLockTimeIndicator&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;bool=halfcycleAmbiguity&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">__msgMsm3Signal</span> <span class="o">=</span> <span class="n">__msgMsm1Signal</span> <span class="o">+</span> <span class="n">__msgMsm2Signal</span>
+    <span class="n">__msgMsm4Signal</span> <span class="o">=</span> <span class="n">__msgMsm3Signal</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;uint:6=signalCNR&quot;</span><span class="p">]</span>
+    <span class="n">__msgMsm5Signal</span> <span class="o">=</span> <span class="n">__msgMsm4Signal</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;int:15=signalFinePhaserangeRate&quot;</span><span class="p">]</span>
+    <span class="n">__msgMsm6Signal</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;int:20=signalFinePseudorangeExtRes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;int:24=signalFinePhaserangeExtRes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;uint:10=phaserangeLockTimeIndicatorExtRes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;bool=halfcycleAmbiguity&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;uint:10=signalCNRExtRes&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">__msgMsm7Signal</span> <span class="o">=</span> <span class="n">__msgMsm6Signal</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;int:15=signalFinePhaserangeRate&quot;</span><span class="p">]</span>
+
+    <span class="c1"># MSM observation types</span>
+    <span class="n">__msmSignalTypes</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;GPS&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L1C&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L1P&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L1W&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L2C&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L2P&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L2W&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L2S&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L2L&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L2X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L5I&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L5Q&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L5X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L1S&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L1L&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L1X&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;GLONASS&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;G1C&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;G1P&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;G2C&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;G2P&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;GALILEO&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E1C&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E1A&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E1B&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E1X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E1Z&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E6C&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E6A&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E6B&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E6X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E6Z&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E7I&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E7Q&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E7X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E8I&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E8Q&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E8X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E5I&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E5Q&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;E5X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;BEIDOU&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;B2I&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;B2Q&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;B2X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;B6I&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;B6Q&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;B6X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;B7I&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;B7Q&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;B7X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;QZSS&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L1C&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L6S&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L6L&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L6X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L2S&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L2L&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L2X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L5I&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L5Q&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L5X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L1S&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L1L&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L1X&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;SBAS&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L1C&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L5I&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L5Q&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;L5X&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Res&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+    <span class="p">}</span>
+
+    <span class="c1"># MSM constellations</span>
+    <span class="n">__msmConstellations</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="mi">7</span><span class="p">:</span> <span class="s2">&quot;GPS&quot;</span><span class="p">,</span>
+        <span class="mi">8</span><span class="p">:</span> <span class="s2">&quot;GLONASS&quot;</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">:</span> <span class="s2">&quot;GALILEO&quot;</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">:</span> <span class="s2">&quot;SBAS&quot;</span><span class="p">,</span>
+        <span class="mi">11</span><span class="p">:</span> <span class="s2">&quot;QZSS&quot;</span><span class="p">,</span>
+        <span class="mi">12</span><span class="p">:</span> <span class="s2">&quot;BEIDOU&quot;</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2021-2026, Lars Stenseng
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            <div class="icons">
+              <a class="muted-link " href="https://github.com/stenseng/ntripstreams" aria-label="GitHub"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg></a>
+              
+            </div>
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=ba50482b"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

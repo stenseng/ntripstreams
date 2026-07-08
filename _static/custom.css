@@ -1,0 +1,18 @@
+/* Small polish on top of the Furo theme. */
+
+/* Slightly rounder, softer code blocks and admonitions. */
+div.highlight,
+pre {
+  border-radius: 8px;
+}
+
+.admonition,
+div.admonition {
+  border-radius: 8px;
+}
+
+/* A touch more breathing room around inline code. */
+code.literal {
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+}
