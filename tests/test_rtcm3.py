@@ -14,6 +14,7 @@ rtk2go.com caster, covering RTCM 3.0, 3.2 and 3.3 mountpoints:
 import glob
 import json
 import os
+import re
 import unittest
 
 from bitstring import BitStream
@@ -28,6 +29,19 @@ RAW_GLOB = os.path.join(DATA_DIR, "samples", "*.rtcm3")
 # fall through to "not implemented").
 LEGACY = set(range(1001, 1005)) | set(range(1009, 1013))
 MSM = set(range(1071, 1128))
+
+
+def format_bits(fmt):
+    """Sum the bit width of a bitstring read format string (after _readfmt)."""
+    total = 0
+    for token in _readfmt(fmt).split(","):
+        token = token.strip()
+        match = re.search(r":(\d+)", token)
+        if match:
+            total += int(match.group(1))
+        elif token == "bool":
+            total += 1
+    return total
 
 
 def iter_raw_frames(path):
@@ -131,6 +145,34 @@ class TestRawCaptures(unittest.TestCase):
                         f"leftover {leftover} bits",
                     )
         self.assertGreater(total, 100)
+
+
+class TestLegacyRecordWidths(unittest.TestCase):
+    """Per-satellite record widths must match the RTCM 10403.3 message tables.
+
+    Guards the GLONASS field widths (DF041 = 25 bits, DF044 = 7 bits) whose
+    two offsetting errors previously summed to the correct total, hiding a
+    misalignment of the decoded L1 pseudorange/phaserange/lock/ambiguity.
+    """
+
+    # {constant suffix: (spec table, total bits per satellite record)}
+    SPEC_BITS = {
+        "1001Obs": 58,  # Table 3.5-2   GPS L1 basic
+        "1002Obs": 74,  # Table 3.5-4   GPS L1 extended
+        "1003Obs": 101,  # Table 3.5-6   GPS L1&L2 basic
+        "1004Obs": 125,  # Table 3.5-8   GPS L1&L2 extended
+        "1009Obs": 64,  # Table 3.5-11  GLONASS L1 basic
+        "1010Obs": 79,  # Table 3.5-12  GLONASS L1 extended
+        "1011Obs": 107,  # Table 3.5-13  GLONASS L1&L2 basic
+        "1012Obs": 130,  # Table 3.5-14  GLONASS L1&L2 extended
+    }
+
+    def test_satellite_record_widths_match_spec(self):
+        for suffix, expected in self.SPEC_BITS.items():
+            fmt = getattr(Rtcm3, "_Rtcm3__msg" + suffix)
+            self.assertEqual(
+                format_bits(fmt), expected, f"{suffix} width != {expected} bits"
+            )
 
 
 if __name__ == "__main__":

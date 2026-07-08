@@ -278,12 +278,10 @@ def main() -> None:
                 ntripstream.setRequestServerHeader(
                     args.url, args.mountpoint[0], None, args.passwd, ntripVersion=1
                 )
-                print(ntripstream.ntripRequestHeader.decode())
             elif not args.ntrip1 and args.user and args.passwd:
                 ntripstream.setRequestServerHeader(
                     args.url, args.mountpoint[0], args.user, args.passwd
                 )
-                print(ntripstream.ntripRequestHeader.decode())
             else:
                 print(
                     "Password needed for Ntrip version 1, "
