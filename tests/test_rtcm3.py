@@ -44,6 +44,19 @@ def format_bits(fmt):
     return total
 
 
+def format_bits(fmt):
+    """Sum the bit width of a bitstring read format string (after _readfmt)."""
+    total = 0
+    for token in _readfmt(fmt).split(","):
+        token = token.strip()
+        match = re.search(r":(\d+)", token)
+        if match:
+            total += int(match.group(1))
+        elif token == "bool":
+            total += 1
+    return total
+
+
 def iter_raw_frames(path):
     """Yield each RTCM3 frame payload BitStream from a raw capture file."""
     raw = open(path, "rb").read()

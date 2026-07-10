@@ -338,8 +338,6 @@ class NtripStream:
         """
         self.ntripWriter.write(self.ntripRequestHeader)
         await self.ntripWriter.drain()
-        for line in self.getHeaderStrings(self.ntripRequestHeader):
-            logging.debug(f"TCP request: {line}")
         logging.info(f"{self.ntripMountPoint}: Request sent.")
         await self.getNtripResponseHeader()
         if self.ntripResponseStatusOk():
