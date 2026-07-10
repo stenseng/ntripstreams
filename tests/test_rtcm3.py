@@ -24,11 +24,25 @@ from ntripstreams.rtcm3 import Rtcm3, _readfmt
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 SAMPLES_JSON = os.path.join(DATA_DIR, "rtcm3_samples.json")
 RAW_GLOB = os.path.join(DATA_DIR, "samples", "*.rtcm3")
+# One real golden frame per message type captured live from rtk2go, keyed by
+# message type -> {"hex": ..., "mount": ...}.
+MESSAGE_SAMPLES = os.path.join(DATA_DIR, "message_type_samples.json")
 
 # Message types the decoder parses field-by-field (the rest are recognised but
 # fall through to "not implemented").
 LEGACY = set(range(1001, 1005)) | set(range(1009, 1013))
 MSM = set(range(1071, 1128))
+# NavIC/IRNSS MSM: broadcast by some rtk2go mounts but outside the decoder's
+# MSM range and undefined in the 2016 10403.3 -- recognised, not field-decoded.
+NAVIC_MSM = set(range(1131, 1138))
+# Non-MSM message types that are fully field-parsed (so they consume the whole
+# payload apart from byte-alignment padding).
+FULLY_PARSED_NON_MSM = (
+    set(range(1001, 1005))
+    | set(range(1009, 1013))
+    | {1005, 1006, 1007, 1008, 1013, 1029, 1033, 1230}
+    | {1019, 1020, 1042, 1044, 1045, 1046}
+)
 
 
 def format_bits(fmt):
@@ -145,6 +159,61 @@ class TestRawCaptures(unittest.TestCase):
                         f"leftover {leftover} bits",
                     )
         self.assertGreater(total, 100)
+
+
+class TestMessageTypeCoverage(unittest.TestCase):
+    """Decode one real golden frame for every message type seen on rtk2go.
+
+    Exercises the full breadth captured live: legacy GPS/GLONASS observables,
+    stationary/descriptor/text messages, all six ephemeris types, and MSM4/5/7
+    across every constellation.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        with open(MESSAGE_SAMPLES) as fh:
+            cls.samples = json.load(fh)
+        cls.rtcm = Rtcm3()
+
+    def frame(self, hexstr):
+        return BitStream(bytes.fromhex(hexstr))
+
+    def test_covers_expected_breadth(self):
+        types = {int(k) for k in self.samples}
+        self.assertGreaterEqual(len(types), 36)
+        self.assertTrue({1001, 1004}.issubset(types))  # legacy GPS
+        self.assertTrue({1010, 1012}.issubset(types))  # legacy GLONASS
+        self.assertTrue({1005, 1006, 1007, 1008, 1013, 1033}.issubset(types))
+        self.assertTrue({1019, 1020, 1042, 1044, 1045, 1046}.issubset(types))
+        self.assertTrue({1077, 1087, 1097, 1107, 1117, 1127}.issubset(types))
+
+    def test_all_types_decode_and_match(self):
+        for key, sample in self.samples.items():
+            mtype, _ = self.rtcm.decodeRtcmFrame(self.frame(sample["hex"]))
+            self.assertEqual(mtype, int(key), f"{key} from {sample['mount']}")
+
+    def test_descriptions_known(self):
+        for key in self.samples:
+            desc = self.rtcm.messageDescription(int(key))
+            self.assertNotIn("currently not implemented", desc)  # unknown fallback
+
+    def test_implemented_types_are_field_decoded(self):
+        for key, sample in self.samples.items():
+            mtype = int(key)
+            if mtype in NAVIC_MSM:  # recognised, not field-decoded
+                continue
+            _, data = self.rtcm.decodeRtcmFrame(self.frame(sample["hex"]))
+            self.assertIsInstance(data[0], list, f"type {mtype} not field-decoded")
+
+    def test_fully_parsed_types_consume_payload(self):
+        for key, sample in self.samples.items():
+            mtype = int(key)
+            if mtype not in FULLY_PARSED_NON_MSM:
+                continue
+            payload = self.frame(sample["hex"])[24:-24]
+            self.rtcm.decodeRtcmMessage(payload)
+            leftover = payload.len - payload.pos
+            self.assertTrue(0 <= leftover < 8, f"type {mtype} leftover {leftover}")
 
 
 class TestStationAndDescriptorMessages(unittest.TestCase):
