@@ -32,8 +32,8 @@ MESSAGE_SAMPLES = os.path.join(DATA_DIR, "message_type_samples.json")
 # fall through to "not implemented").
 LEGACY = set(range(1001, 1005)) | set(range(1009, 1013))
 MSM = set(range(1071, 1128))
-# NavIC/IRNSS MSM: broadcast by some rtk2go mounts but outside the decoder's
-# MSM range and undefined in the 2016 10403.3 -- recognised, not field-decoded.
+# NavIC/IRNSS MSM: decoded structurally, but not implemented from the 2016
+# 10403.3 (which does not define NavIC MSM); signal names are placeholders.
 NAVIC_MSM = set(range(1131, 1138))
 # Non-MSM message types that are fully field-parsed (so they consume the whole
 # payload apart from byte-alignment padding).
@@ -200,10 +200,24 @@ class TestMessageTypeCoverage(unittest.TestCase):
     def test_implemented_types_are_field_decoded(self):
         for key, sample in self.samples.items():
             mtype = int(key)
-            if mtype in NAVIC_MSM:  # recognised, not field-decoded
-                continue
             _, data = self.rtcm.decodeRtcmFrame(self.frame(sample["hex"]))
             self.assertIsInstance(data[0], list, f"type {mtype} not field-decoded")
+
+    def test_navic_msm_decoded_structurally(self):
+        # NavIC/IRNSS MSM decodes via the generic MSM structure; the
+        # constellation resolves to IRNSS and signal names are placeholders.
+        checked = 0
+        for key, sample in self.samples.items():
+            mtype = int(key)
+            if mtype not in NAVIC_MSM:
+                continue
+            _, data = self.rtcm.decodeRtcmFrame(self.frame(sample["hex"]))
+            self.assertIsInstance(data[0], list)
+            self.assertEqual(self.rtcm.constellation(mtype), "IRNSS")
+            signals = self.rtcm.msmSignalTypes(mtype, data[0][10])
+            self.assertIsInstance(signals, list)  # placeholders, no error
+            checked += 1
+        self.assertGreater(checked, 0)  # 1134 and 1137 are in the captures
 
     def test_fully_parsed_types_consume_payload(self):
         for key, sample in self.samples.items():

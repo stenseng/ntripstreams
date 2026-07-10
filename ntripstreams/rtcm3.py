@@ -35,7 +35,9 @@ class Rtcm3:
     message-level decoding of:
 
     - legacy GPS/GLONASS observables (1001-1004, 1009-1012);
-    - Multiple Signal Messages (MSM, 1071-1127);
+    - Multiple Signal Messages (MSM, 1071-1137, where NavIC/IRNSS 1131-1137
+      is decoded structurally but is not implemented from the provided
+      RTCM 10403.3 documentation -- see :meth:`msmSignalTypes`);
     - stationary reference station and descriptors (1005-1008, 1013, 1033,
       1230);
     - satellite ephemerides (1019, 1020, 1042, 1044-1046);
@@ -179,28 +181,14 @@ class Rtcm3:
         -------
         str
             Constellation name for legacy GPS (1001-1004), GLONASS
-            (1009-1012) and MSM (1071-1127) messages; ``"GNSS"`` for any other
-            message type.
-        """
-        """Return the GNSS constellation for any supported message type.
-
-        Parameters
-        ----------
-        messageType : int
-            An RTCM 3 message number.
-
-        Returns
-        -------
-        str
-            Constellation name for legacy GPS (1001-1004), GLONASS
-            (1009-1012) and MSM (1071-1127) messages; ``"GNSS"`` for any other
+            (1009-1012) and MSM (1071-1137) messages; ``"GNSS"`` for any other
             message type.
         """
         if messageType >= 1001 and messageType <= 1004:
             constellation = self.__msmConstellations[7]
         elif messageType >= 1009 and messageType <= 1012:
             constellation = self.__msmConstellations[8]
-        elif messageType >= 1071 and messageType <= 1127:
+        elif messageType >= 1071 and messageType <= 1137:
             constellation = self.msmConstellation(messageType)
         else:
             constellation = "GNSS"
@@ -212,7 +200,7 @@ class Rtcm3:
         Parameters
         ----------
         messageType : int
-            An MSM message number in the range 1071-1127.
+            An MSM message number in the range 1071-1137.
         msmSignals : str
             The 32-bit GNSS signal mask as a string of ``"0"``/``"1"``
             characters (the ``gnssSignalMask`` header field).
@@ -222,22 +210,13 @@ class Rtcm3:
         list of str
             RINEX-style signal codes (e.g. ``"L1C"``, ``"L2W"``) for each bit
             set in the mask, in mask order.
-        """
-        """Resolve the signal-type codes selected by an MSM signal mask.
 
-        Parameters
-        ----------
-        messageType : int
-            An MSM message number in the range 1071-1127.
-        msmSignals : str
-            The 32-bit GNSS signal mask as a string of ``"0"``/``"1"``
-            characters (the ``gnssSignalMask`` header field).
-
-        Returns
-        -------
-        list of str
-            RINEX-style signal codes (e.g. ``"L1C"``, ``"L2W"``) for each bit
-            set in the mask, in mask order.
+        Notes
+        -----
+        NavIC/IRNSS (1131-1137) is supported structurally but its signal-ID
+        mapping is NOT implemented from the provided RTCM 10403.3 (2016), which
+        does not define NavIC MSM; those signals resolve to ``"Res"``
+        placeholders (see ``__msmSignalTypes["IRNSS"]``).
         """
         signals = [
             self.__msmSignalTypes[self.msmConstellation(messageType)][i]
@@ -507,6 +486,10 @@ class Rtcm3:
             or (messageType >= 1101 and messageType <= 1107)
             or (messageType >= 1111 and messageType <= 1117)
             or (messageType >= 1121 and messageType <= 1127)
+            # NavIC/IRNSS MSM (1131-1137): decoded via the generic MSM
+            # structure. NOT implemented from the provided RTCM 10403.3 (2016),
+            # which does not define NavIC MSM; see msmSignalTypes.
+            or (messageType >= 1131 and messageType <= 1137)
         ):
             head, numSats, numSignals, numCells = self.__decodeMsmHeader(message)
             if (
@@ -778,13 +761,13 @@ class Rtcm3:
         1128: "Reserved MSM",
         1129: "Reserved MSM",
         1130: "Reserved MSM",
-        1131: "IRNSS MSM1 (Experimental, not implemented)",
-        1132: "IRNSS MSM2 (Experimental, not implemented)",
-        1133: "IRNSS MSM3 (Experimental, not implemented)",
-        1134: "IRNSS MSM4 (Experimental, not implemented)",
-        1135: "IRNSS MSM5 (Experimental, not implemented)",
-        1136: "IRNSS MSM6 (Experimental, not implemented)",
-        1137: "IRNSS MSM7 (Experimental, not implemented)",
+        1131: "IRNSS MSM1",
+        1132: "IRNSS MSM2",
+        1133: "IRNSS MSM3",
+        1134: "IRNSS MSM4",
+        1135: "IRNSS MSM5",
+        1136: "IRNSS MSM6",
+        1137: "IRNSS MSM7",
         1138: "Reserved MSM (Experimental)",
         1139: "Reserved MSM (Experimental)",
         1140: "Reserved MSM (Experimental)",
@@ -1460,6 +1443,11 @@ class Rtcm3:
             "Res",
             "Res",
         ],
+        # NavIC/IRNSS. The signal-ID mapping is NOT defined in the provided
+        # RTCM 10403.3 (2016); these placeholders let msmSignalTypes run without
+        # naming the actual signals. Replace with the real mapping from the
+        # relevant RTCM amendment when available.
+        "IRNSS": ["Res"] * 32,
     }
 
     # MSM constellations
@@ -1470,4 +1458,5 @@ class Rtcm3:
         10: "SBAS",
         11: "QZSS",
         12: "BEIDOU",
+        13: "IRNSS",  # NavIC; not from the provided documentation (see below)
     }
