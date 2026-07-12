@@ -24,11 +24,25 @@ from ntripstreams.rtcm3 import Rtcm3, _readfmt
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 SAMPLES_JSON = os.path.join(DATA_DIR, "rtcm3_samples.json")
 RAW_GLOB = os.path.join(DATA_DIR, "samples", "*.rtcm3")
+# One real golden frame per message type captured live from rtk2go, keyed by
+# message type -> {"hex": ..., "mount": ...}.
+MESSAGE_SAMPLES = os.path.join(DATA_DIR, "message_type_samples.json")
 
 # Message types the decoder parses field-by-field (the rest are recognised but
 # fall through to "not implemented").
 LEGACY = set(range(1001, 1005)) | set(range(1009, 1013))
 MSM = set(range(1071, 1128))
+# NavIC/IRNSS MSM: decoded structurally, but not implemented from the 2016
+# 10403.3 (which does not define NavIC MSM); signal names are placeholders.
+NAVIC_MSM = set(range(1131, 1138))
+# Non-MSM message types that are fully field-parsed (so they consume the whole
+# payload apart from byte-alignment padding).
+FULLY_PARSED_NON_MSM = (
+    set(range(1001, 1005))
+    | set(range(1009, 1013))
+    | {1005, 1006, 1007, 1008, 1013, 1029, 1033, 1230}
+    | {1019, 1020, 1042, 1044, 1045, 1046}
+)
 
 
 def format_bits(fmt):
@@ -145,6 +159,312 @@ class TestRawCaptures(unittest.TestCase):
                         f"leftover {leftover} bits",
                     )
         self.assertGreater(total, 100)
+
+
+class TestMessageTypeCoverage(unittest.TestCase):
+    """Decode one real golden frame for every message type seen on rtk2go.
+
+    Exercises the full breadth captured live: legacy GPS/GLONASS observables,
+    stationary/descriptor/text messages, all six ephemeris types, and MSM4/5/7
+    across every constellation.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        with open(MESSAGE_SAMPLES) as fh:
+            cls.samples = json.load(fh)
+        cls.rtcm = Rtcm3()
+
+    def frame(self, hexstr):
+        return BitStream(bytes.fromhex(hexstr))
+
+    def test_covers_expected_breadth(self):
+        types = {int(k) for k in self.samples}
+        self.assertGreaterEqual(len(types), 36)
+        self.assertTrue({1001, 1004}.issubset(types))  # legacy GPS
+        self.assertTrue({1010, 1012}.issubset(types))  # legacy GLONASS
+        self.assertTrue({1005, 1006, 1007, 1008, 1013, 1033}.issubset(types))
+        self.assertTrue({1019, 1020, 1042, 1044, 1045, 1046}.issubset(types))
+        self.assertTrue({1077, 1087, 1097, 1107, 1117, 1127}.issubset(types))
+
+    def test_all_types_decode_and_match(self):
+        for key, sample in self.samples.items():
+            mtype, _ = self.rtcm.decodeRtcmFrame(self.frame(sample["hex"]))
+            self.assertEqual(mtype, int(key), f"{key} from {sample['mount']}")
+
+    def test_descriptions_known(self):
+        for key in self.samples:
+            desc = self.rtcm.messageDescription(int(key))
+            self.assertNotIn("currently not implemented", desc)  # unknown fallback
+
+    def test_implemented_types_are_field_decoded(self):
+        for key, sample in self.samples.items():
+            mtype = int(key)
+            _, data = self.rtcm.decodeRtcmFrame(self.frame(sample["hex"]))
+            self.assertIsInstance(data[0], list, f"type {mtype} not field-decoded")
+
+    def test_navic_msm_decoded_structurally(self):
+        # NavIC/IRNSS MSM decodes via the generic MSM structure; the
+        # constellation resolves to IRNSS and signal names are placeholders.
+        checked = 0
+        for key, sample in self.samples.items():
+            mtype = int(key)
+            if mtype not in NAVIC_MSM:
+                continue
+            _, data = self.rtcm.decodeRtcmFrame(self.frame(sample["hex"]))
+            self.assertIsInstance(data[0], list)
+            self.assertEqual(self.rtcm.constellation(mtype), "IRNSS")
+            signals = self.rtcm.msmSignalTypes(mtype, data[0][10])
+            self.assertIsInstance(signals, list)  # placeholders, no error
+            checked += 1
+        self.assertGreater(checked, 0)  # 1134 and 1137 are in the captures
+
+    def test_fully_parsed_types_consume_payload(self):
+        for key, sample in self.samples.items():
+            mtype = int(key)
+            if mtype not in FULLY_PARSED_NON_MSM:
+                continue
+            payload = self.frame(sample["hex"])[24:-24]
+            self.rtcm.decodeRtcmMessage(payload)
+            leftover = payload.len - payload.pos
+            self.assertTrue(0 <= leftover < 8, f"type {mtype} leftover {leftover}")
+
+
+class TestStationAndDescriptorMessages(unittest.TestCase):
+    """Decode the stationary reference-station and descriptor messages."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.rtcm = Rtcm3()
+        cls.frames = {}  # message type -> decoded (head, sat, sig)
+        for path in glob.glob(RAW_GLOB):
+            for payload in iter_raw_frames(path):
+                mt = payload.peek("uint:12")
+                if (
+                    mt in {1005, 1006, 1007, 1008, 1013, 1033, 1230}
+                    and mt not in cls.frames
+                ):
+                    _, data = cls.rtcm.decodeRtcmMessage(payload)
+                    cls.frames[mt] = (data, payload.len - payload.pos)
+
+    def head(self, mt):
+        self.assertIn(mt, self.frames, f"no captured {mt} frame")
+        data, leftover = self.frames[mt]
+        self.assertNotEqual(data[0], "Message type not implemented")
+        self.assertTrue(0 <= leftover < 8, f"{mt} leftover {leftover} bits")
+        return data
+
+    def test_1005_arp_is_near_earth_surface(self):
+        head = self.head(1005)[0]
+        x, y, z = head[7], head[9], head[11]  # ECEF in 0.0001 m
+        radius = (x**2 + y**2 + z**2) ** 0.5 * 1e-4
+        self.assertTrue(6.3e6 < radius < 6.5e6, f"radius {radius:.0f} m off-Earth")
+
+    def test_1006_has_antenna_height(self):
+        head = self.head(1006)[0]
+        self.assertEqual(len(head), 13)  # 1005 fields + antenna height
+
+    def test_1007_antenna_descriptor_is_ascii(self):
+        head = self.head(1007)[0]
+        self.assertEqual(head[2], len(head[3]))  # counter matches string length
+        self.assertTrue(head[3].isprintable())
+
+    def test_1033_receiver_and_antenna_descriptors(self):
+        head = self.head(1033)[0]
+        # [type, refId, N, ant, setup, M, antSerial, I, rxType, J, rxFw, K, rxSerial]
+        self.assertEqual(head[2], len(head[3]))  # antenna descriptor
+        self.assertEqual(head[7], len(head[8]))  # receiver type descriptor
+        self.assertTrue(head[8], "receiver type descriptor empty")
+
+    def test_1013_announcements(self):
+        head, sat, _ = self.head(1013)
+        self.assertEqual(len(sat), head[4])  # Nm announcement sets
+        for msgId, sync, interval in sat:
+            self.assertTrue(1000 <= msgId <= 4095)
+
+    def test_1230_bias_count_matches_mask(self):
+        head, sat, _ = self.head(1230)
+        self.assertEqual(len(sat), head[3].count("1"))
+
+
+class TestEphemerisMessages(unittest.TestCase):
+    """Ephemeris message widths (10403.3) and decoding of captured frames."""
+
+    # message type -> total payload bits (TOTAL row of the spec table)
+    SPEC_BITS = {1019: 488, 1020: 360, 1042: 511, 1044: 485, 1045: 496, 1046: 504}
+
+    def test_fixed_ephemeris_format_widths(self):
+        fmts = Rtcm3._Rtcm3__ephemerisFormats
+        for mt, fmt in fmts.items():
+            self.assertEqual(format_bits(fmt), self.SPEC_BITS[mt], f"{mt} width")
+
+    def test_glonass_1020_sign_magnitude_conversion(self):
+        rtcm = Rtcm3()
+        fmt = "uint:24=xnDot, uint:6=satelliteId"
+        negative = (1 << 23) | 100  # sign bit set, magnitude 100
+        out = rtcm._convertSignMagnitude(fmt, [negative, 5])
+        self.assertEqual(out[0], -100)  # sign-magnitude field converted
+        self.assertEqual(out[1], 5)  # non-sign-magnitude field untouched
+        self.assertEqual(rtcm._convertSignMagnitude(fmt, [100, 5])[0], 100)
+
+    def test_captured_ephemeris_frames_fully_consume(self):
+        rtcm = Rtcm3()
+        checked = 0
+        for path in glob.glob(RAW_GLOB):
+            for payload in iter_raw_frames(path):
+                mt = payload.peek("uint:12")
+                if mt not in self.SPEC_BITS:
+                    continue
+                _, data = rtcm.decodeRtcmMessage(payload)
+                self.assertNotEqual(data[0], "Message type not implemented")
+                leftover = payload.len - payload.pos
+                self.assertTrue(0 <= leftover < 8, f"{mt} leftover {leftover}")
+                checked += 1
+        self.assertGreater(checked, 0)  # 1042 and 1046 are in the captures
+
+
+class TestSsrMessages(unittest.TestCase):
+    """SSR messages 1057-1068 (spec bit totals + synthetic round-trip).
+
+    No SSR frames appear in the captures, so decoding is verified for
+    self-consistency: header/satellite widths match the 10403.3 tables, and
+    synthetic payloads decode with the right satellite/code counts and consume
+    exactly.
+    """
+
+    HEADER_BITS = {
+        1057: 68,
+        1058: 67,
+        1059: 67,
+        1060: 68,
+        1061: 67,
+        1062: 67,
+        1063: 65,
+        1064: 64,
+        1065: 64,
+        1066: 65,
+        1067: 64,
+        1068: 64,
+    }
+    SAT_BITS = {
+        1057: 135,
+        1058: 76,
+        1060: 205,
+        1061: 12,
+        1062: 28,
+        1063: 134,
+        1064: 75,
+        1066: 204,
+        1067: 11,
+        1068: 27,
+    }
+
+    def test_header_and_sat_bit_totals(self):
+        ssr = Rtcm3._Rtcm3__ssrMessages
+        for mt, spec in ssr.items():
+            self.assertEqual(format_bits(spec["header"]), self.HEADER_BITS[mt])
+            if "sat" in spec:
+                self.assertEqual(format_bits(spec["sat"]), self.SAT_BITS[mt])
+            else:  # code bias: code block is signal(5) + bias(14)
+                self.assertEqual(format_bits(spec["code"]), 19)
+
+    def test_synthetic_roundtrip(self):
+        ssr = Rtcm3._Rtcm3__ssrMessages
+        rtcm = Rtcm3()
+
+        def zeros(n):
+            return BitStream(uint=0, length=n) if n else BitStream()
+
+        def build(mt, num_sats, num_codes=0):
+            spec = ssr[mt]
+            hbits = format_bits(spec["header"])
+            b = zeros(hbits)
+            b[0:12] = BitStream(uint=mt, length=12)
+            b[hbits - 6 : hbits] = BitStream(uint=num_sats, length=6)  # DF387
+            for _ in range(num_sats):
+                if "code" in spec:
+                    b += zeros(int(_readfmt(spec["satId"]).split(":")[1]))
+                    b += BitStream(uint=num_codes, length=5)
+                    b += zeros(format_bits(spec["code"]) * num_codes)
+                else:
+                    b += zeros(format_bits(spec["sat"]))
+            return b
+
+        for mt in ssr:
+            code_counts = (0, 3) if "code" in ssr[mt] else (0,)
+            for num_codes in code_counts:
+                for num_sats in (0, 1, 4):
+                    payload = build(mt, num_sats, num_codes)
+                    total = payload.len
+                    payload.pos = 0
+                    mtype, data = rtcm.decodeRtcmMessage(payload)
+                    self.assertEqual(mtype, mt)
+                    self.assertEqual(len(data[1]), num_sats)
+                    self.assertEqual(payload.pos, total)  # consumed exactly
+
+
+class TestNetworkMessages(unittest.TestCase):
+    """Network RTK messages (spec bit totals + synthetic round-trip)."""
+
+    HEADER_BITS = {
+        1015: 76,
+        1016: 76,
+        1017: 76,
+        1037: 73,
+        1038: 73,
+        1039: 73,
+        1030: 44,
+        1031: 41,
+        1034: 49,
+        1035: 46,
+    }
+    SAT_BITS = {
+        1015: 28,
+        1016: 36,
+        1017: 53,
+        1037: 28,
+        1038: 36,
+        1039: 53,
+        1030: 49,
+        1031: 49,
+        1034: 66,
+        1035: 66,
+    }
+
+    def test_1014_fixed_width(self):
+        self.assertEqual(format_bits(Rtcm3._Rtcm3__msg1014), 117)
+
+    def test_header_and_block_bit_totals(self):
+        net = Rtcm3._Rtcm3__networkMessages
+        for mt, spec in net.items():
+            self.assertEqual(format_bits(spec["header"]), self.HEADER_BITS[mt])
+            self.assertEqual(format_bits(spec["sat"]), self.SAT_BITS[mt])
+
+    def test_synthetic_roundtrip(self):
+        net = Rtcm3._Rtcm3__networkMessages
+        rtcm = Rtcm3()
+
+        def zeros(n):
+            return BitStream(uint=0, length=n) if n else BitStream()
+
+        for mt, spec in net.items():
+            hbits = format_bits(spec["header"])
+            last = _readfmt(spec["header"]).replace(" ", "").split(",")[-1]
+            count_width = int(last.split(":")[1])
+            for num_sats in (0, 1, 5):
+                b = zeros(hbits)
+                b[0:12] = BitStream(uint=mt, length=12)
+                b[hbits - count_width : hbits] = BitStream(
+                    uint=num_sats, length=count_width
+                )
+                for _ in range(num_sats):
+                    b += zeros(format_bits(spec["sat"]))
+                total = b.len
+                b.pos = 0
+                mtype, data = rtcm.decodeRtcmMessage(b)
+                self.assertEqual(mtype, mt)
+                self.assertEqual(len(data[1]), num_sats)
+                self.assertEqual(b.pos, total)
 
 
 class TestLegacyRecordWidths(unittest.TestCase):
