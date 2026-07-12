@@ -39,6 +39,9 @@ ENV/
 # Sphinx documentation build
 docs/_build/
 
+# Background documentation for development
+docs/design/
+
 # Editors / IDEs
 .vscode/
 .idea/
