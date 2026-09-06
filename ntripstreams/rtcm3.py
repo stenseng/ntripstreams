@@ -42,7 +42,9 @@ class Rtcm3:
       1230);
     - satellite ephemerides (1019, 1020, 1042, 1044-1046);
     - GPS/GLONASS SSR corrections (1057-1068);
-    - network RTK messages (1014-1017, 1030-1031, 1034-1035, 1037-1039).
+    - network RTK messages (1014-1017, 1030-1031, 1034-1035, 1037-1039);
+    - datum, transformation and projection messages (1021-1027);
+    - physical reference station position (1032).
 
     plus lookups for message descriptions, GNSS constellations and MSM signal
     types. Decoded fields are returned positionally; consult the cited
@@ -231,8 +233,8 @@ class Rtcm3:
 
         Parameters
         ----------
-        rtcmFrame : bitstring.BitStream
-            A complete, CRC-validated RTCM 3 frame.
+        rtcmPayload : bitstring.BitStream
+            The payload of a complete, CRC-validated NTRIP frame.
 
         Returns
         -------
@@ -332,6 +334,7 @@ class Rtcm3:
         head = []
         satData = []
         signalData = []
+        otherData = []
         messageType = message.peek("uint:12")
         logging.debug(f"Decoding message type {messageType}")
         if messageType == 1001:
@@ -350,7 +353,6 @@ class Rtcm3:
             head = self._rl(message, self.__msg1004Head)
             for _ in range(head[4]):
                 satData.append(self._rl(message, self.__msg1004Obs))
-
         elif messageType == 1009:
             head = self._rl(message, self.__msg1009Head)
             for _ in range(head[4]):
@@ -367,7 +369,6 @@ class Rtcm3:
             head = self._rl(message, self.__msg1012Head)
             for _ in range(head[4]):
                 satData.append(self._rl(message, self.__msg1012Obs))
-
         elif (
             (messageType >= 1071 and messageType <= 1077)
             or (messageType >= 1081 and messageType <= 1087)
@@ -423,7 +424,6 @@ class Rtcm3:
 
         elif messageType == 1029:
             head = self._rl(message, self.__msg1029)
-
         elif messageType == 1005:
             head = self._rl(message, self.__msg1005)
         elif messageType == 1006:
@@ -431,7 +431,7 @@ class Rtcm3:
         elif messageType == 1007:
             head = self._rl(
                 message,
-                "uint:12=messageNumber, uint:12=refStationId, "
+                "uint:12=messageType, uint:12=refStationId, "
                 "uint:8=descriptorCounter",
             )
             head.append(self._readCountedString(message, head[2]))
@@ -439,7 +439,7 @@ class Rtcm3:
         elif messageType == 1008:
             head = self._rl(
                 message,
-                "uint:12=messageNumber, uint:12=refStationId, "
+                "uint:12=messageType, uint:12=refStationId, "
                 "uint:8=descriptorCounter",
             )
             head.append(self._readCountedString(message, head[2]))
@@ -448,7 +448,7 @@ class Rtcm3:
             head.append(serialCount)
             head.append(self._readCountedString(message, serialCount))
         elif messageType == 1033:
-            head = self._rl(message, "uint:12=messageNumber, uint:12=refStationId")
+            head = self._rl(message, "uint:12=messageType, uint:12=refStationId")
             for withSetupId in (True, False, False, False, False):
                 count = message.read("uint:8")
                 head.append(count)
@@ -458,7 +458,7 @@ class Rtcm3:
         elif messageType == 1013:
             head = self._rl(
                 message,
-                "uint:12=messageNumber, uint:12=refStationId, uint:16=mjd, "
+                "uint:12=messageType, uint:12=refStationId, uint:16=mjd, "
                 "uint:17=secondsOfDay, uint:5=messageAnnouncements, "
                 "uint:8=leapSeconds",
             )
@@ -473,13 +473,12 @@ class Rtcm3:
         elif messageType == 1230:
             head = self._rl(
                 message,
-                "uint:12=messageNumber, uint:12=refStationId, "
+                "uint:12=messageType, uint:12=refStationId, "
                 "bool=codePhaseBiasIndicator, pad:3, bin:4=fdmaSignalMask",
             )
             for mask in head[3]:
                 if mask == "1":
                     satData.append(message.read("int:16"))
-
         elif messageType in self.__ephemerisFormats:
             fmt = self.__ephemerisFormats[messageType]
             head = self._rl(message, fmt)
@@ -494,10 +493,25 @@ class Rtcm3:
             head = self._rl(message, spec["header"])
             for _ in range(head[-1]):  # last header field = satellite count
                 satData.append(self._rl(message, spec["sat"]))
-
+        elif messageType == 1021 or messageType == 1022:
+            head = self._rl(
+                message, "uint:12=messageType, uint:5=sourceNameCounter"
+            )
+            head.append(self._readCountedString(message, head[1]))
+            targetNameCounter = message.read("uint:5")
+            head.append(targetNameCounter)
+            head.append(self._readCountedString(message, targetNameCounter))
+            otherData.append(self._rl(message, self.__msg1021_2Pre))
+            if messageType == 1022:
+                otherData.append(self._rl(message, self.__msg1022Body))
+            otherData.append(self._rl(message, self.__msg1021_2Tail))
+        elif messageType in self.__transformationFormats:
+            head = self._rl(message, self.__transformationFormats[messageType])
+        elif messageType == 1032:
+            head = self._rl(message, self.__msg1032)
         else:
             head = "Message type not implemented"
-        data = [head, satData, signalData]
+        data = [head, satData, signalData, otherData]
         return messageType, data
 
     def messageDescription(self, messageType: int):
@@ -536,8 +550,8 @@ class Rtcm3:
         1014: "Network Auxiliary Station Data",
         1015: "GPS Ionospheric Correction Differences",
         1016: "GPS Geometric Correction Differences",
-        1017: "GPS Combined Geometric and Ionospheric Correction " + "Differences",
-        1018: "RESERVED for Alternative Ionospheric Correction Difference " + "Message",
+        1017: "GPS Combined Geometric and Ionospheric Correction Differences",
+        1018: "RESERVED for Alternative Ionospheric Correction Difference Message",
         1019: "GPS Ephemerides",
         1020: "GLONASS Ephemerides",
         1021: "Helmert / Abridged Molodenski Transformation Parameters",
@@ -548,7 +562,7 @@ class Rtcm3:
         + "Lambert Conic Conformal (2 SP) and Oblique Mercator",
         1026: "Projection Parameters, Projection Type LCC2SP "
         + "(Lambert Conic Conformal (2 SP))",
-        1027: "Projection Parameters, Projection Type OM " + "(Oblique Mercator)",
+        1027: "Projection Parameters, Projection Type OM (Oblique Mercator)",
         1028: "(Reserved for Global to Plate-Fixed Transformation)",
         1029: "Unicode Text String",
         1030: "GPS Network RTK Residual Message",
@@ -559,7 +573,7 @@ class Rtcm3:
         1035: "GLONASS Network FKP Gradient",
         1037: "GLONASS Ionospheric Correction Differences",
         1038: "GLONASS Geometric Correction Differences",
-        1039: "GLONASS Combined Geometric and Ionospheric Correction " + "Differences",
+        1039: "GLONASS Combined Geometric and Ionospheric Correction Differences",
         1042: "BDS Satellite Ephemeris Data",
         1044: "QZSS Ephemerides",
         1045: "Galileo F/NAV Satellite Ephemeris Data",
@@ -719,11 +733,85 @@ class Rtcm3:
     )
     __msg1006 = __msg1005 + ", uint:16=antennaHeight"
 
+    # Physical Reference Station Position (Table 3.5-35, fixed 156 bits).
+    __msg1032 = (
+        "uint:12=messageType, uint:12=nonPhysicalReferenceStationId, "
+        "uint:12=physicalReferenceStationId, uint:6=itrfEpochYear, "
+        "int:38=arpEcefX, int:38=arpEcefY, int:38=arpEcefZ"
+    )
+
+    # Datum transformation messages 1021/1022 (Tables 3.5-24, 3.5-25). Both
+    # start with two counted ISO-8859-1 name strings (source, target) decoded
+    # procedurally; the fixed tail below follows the target name. 1022 adds the
+    # Molodenski-Badekas rotation point (X_P/Y_P/Z_P) after the scale
+    # correction. DF148 is a 10-bit "utilized transformation" bitmask.
+    __msg1021_2Pre = (
+        "uint:8=systemId, bin:10=utilizedTransformation, uint:5=plateNumber, "
+        "uint:4=computationIndicator, uint:2=heightIndicator, int:19=phiV, "
+        "int:20=lambdaV, uint:14=deltaPhiV, uint:14=deltaLambdaV, int:23=dX, "
+        "int:23=dY, int:23=dZ, int:32=rotationX, int:32=rotationY, "
+        "int:32=rotationZ, int:25=scaleCorrection, "
+    )
+    __msg1022Body = (
+        "int:35=xP, int:35=yP, int:35=zP, "
+    )
+    __msg1021_2Tail = (
+        "uint:24=semiMajorSource, uint:25=semiMinorSource, uint:24=semiMajorTarget, "
+        "uint:25=semiMinorTarget, uint:3=horizontalQuality, uint:3=verticalQuality"
+    )
+
+    # Fixed-format datum residual (1023/1024) and projection (1025/1026/1027)
+    # messages (RTCM 10403.3 Tables 3.5-26..30). 1023/1024 carry three shifts
+    # for each of 16 grid points (48 int9 residuals, interleaved
+    # phi/lambda/height per point) between the header and the trailing quality
+    # fields. Values are positional; consult the cited tables for field
+    # names/scales.
+    __transformationFormats = {
+        1023: (
+            "uint:12=messageType, uint:8=systemId, "
+            "bool=horizontalShiftIndicator, bool=verticalShiftIndicator, "
+            "int:21=phi0, int:22=lambda0, uint:12=deltaPhi0, "
+            "uint:12=deltaLambda0, int:8=meanPhi0, int:8=meanLambda0, "
+            "int:15=meanHeight, 48*int:9, uint:2=horizontalInterpolation, "
+            "uint:2=verticalInterpolation, uint:3=horizontalGridQuality, "
+            "uint:3=verticalGridQuality, uint:16=mjd"
+        ),
+        1024: (
+            "uint:12=messageType, uint:8=systemId, "
+            "bool=horizontalShiftIndicator, bool=verticalShiftIndicator, "
+            "int:25=northingOrigin, uint:26=eastingOrigin, "
+            "uint:12=deltaNorthing0, uint:12=deltaEasting0, int:10=meanNorthing0, "
+            "int:10=meanEasting0, int:15=meanHeight0, 48*int:9, "
+            "uint:2=horizontalInterpolation, uint:2=verticalInterpolation, "
+            "uint:3=horizontalGridQuality, uint:3=verticalGridQuality, "
+            "uint:16=mjd"
+        ),
+        1025: (
+            "uint:12=messageType, uint:8=systemId, uint:6=projectionType, "
+            "int:34=latitudeNaturalOrigin, int:35=longitudeNaturalOrigin, "
+            "uint:30=scaleFactorNaturalOrigin, uint:36=falseEasting, "
+            "int:35=falseNorthing"
+        ),
+        1026: (
+            "uint:12=messageType, uint:8=systemId, uint:6=projectionType, "
+            "int:34=latitudeFalseOrigin, int:35=longitudeFalseOrigin, "
+            "int:34=latitudeStandardParallel1, int:34=latitudeStandardParallel2, "
+            "uint:36=eastingFalseOrigin, int:35=northingFalseOrigin"
+        ),
+        1027: (
+            "uint:12=messageType, uint:8=systemId, uint:6=projectionType, "
+            "bool=rectificationFlag, int:34=latitudeProjectionCenter, "
+            "int:35=longitudeProjectionCenter, uint:35=azimuthInitialLine, "
+            "int:26=diffAngleRectifiedSkewGrid, uint:30=scaleFactorInitialLine, "
+            "uint:36=eastingProjectionCenter, int:35=northingProjectionCenter"
+        ),
+    }
+
     # Satellite ephemeris messages (RTCM 10403.3 Tables 3.5-21, 110-113).
     # Values are positional; see the cited tables for field names/scales.
     __ephemerisFormats = {
         1019: (
-            "uint:12=messageNumber, uint:6=satelliteId, uint:10=weekNumber, "
+            "uint:12=messageType, uint:6=satelliteId, uint:10=weekNumber, "
             "uint:4=svAccuracy, uint:2=codeOnL2, int:14=idot, uint:8=iode, "
             "uint:16=toc, int:8=af2, int:16=af1, int:22=af0, uint:10=iodc, "
             "int:16=crs, int:16=deltaN, int:32=m0, int:16=cuc, "
@@ -733,7 +821,7 @@ class Rtcm3:
             "uint:6=svHealth, bool=l2PDataFlag, bool=fitInterval"
         ),
         1042: (
-            "uint:12=messageNumber, uint:6=satelliteId, uint:13=weekNumber, "
+            "uint:12=messageType, uint:6=satelliteId, uint:13=weekNumber, "
             "uint:4=svUrai, int:14=idot, uint:5=aode, uint:17=toc, int:11=a2, "
             "int:22=a1, int:24=a0, uint:5=aodc, int:18=crs, int:16=deltaN, "
             "int:32=m0, int:18=cuc, uint:32=eccentricity, int:18=cus, "
@@ -742,7 +830,7 @@ class Rtcm3:
             "int:10=tgd1, int:10=tgd2, bool=svHealth"
         ),
         1044: (
-            "uint:12=messageNumber, uint:4=satelliteId, uint:16=toc, int:8=af2, "
+            "uint:12=messageType, uint:4=satelliteId, uint:16=toc, int:8=af2, "
             "int:16=af1, int:22=af0, uint:8=iode, int:16=crs, int:16=deltaN, "
             "int:32=m0, int:16=cuc, uint:32=eccentricity, int:16=cus, "
             "uint:32=sqrtA, uint:16=toe, int:16=cic, int:32=omega0, int:16=cis, "
@@ -752,7 +840,7 @@ class Rtcm3:
             "bool=fitInterval"
         ),
         1045: (
-            "uint:12=messageNumber, uint:6=satelliteId, uint:12=weekNumber, "
+            "uint:12=messageType, uint:6=satelliteId, uint:12=weekNumber, "
             "uint:10=iodnav, uint:8=sisa, int:14=idot, uint:14=toc, int:6=af2, "
             "int:21=af1, int:31=af0, int:16=crs, int:16=deltaN, int:32=m0, "
             "int:16=cuc, uint:32=eccentricity, int:16=cus, uint:32=sqrtA, "
@@ -762,7 +850,7 @@ class Rtcm3:
             "uint:7=reserved"
         ),
         1046: (
-            "uint:12=messageNumber, uint:6=satelliteId, uint:12=weekNumber, "
+            "uint:12=messageType, uint:6=satelliteId, uint:12=weekNumber, "
             "uint:10=iodnav, uint:8=sisa, int:14=idot, uint:14=toc, int:6=af2, "
             "int:21=af1, int:31=af0, int:16=crs, int:16=deltaN, int:32=m0, "
             "int:16=cuc, uint:32=eccentricity, int:16=cus, uint:32=sqrtA, "
@@ -777,7 +865,7 @@ class Rtcm3:
         # (bitstring has no native sign-magnitude type); see
         # __msg1020SignMagnitude.
         1020: (
-            "uint:12=messageNumber, uint:6=satelliteId, "
+            "uint:12=messageType, uint:6=satelliteId, "
             "uint:5=freqChannelNumber, bool=almanacHealth, "
             "bool=almanacHealthAvail, uint:2=p1, uint:12=tk, bool=bnMsb, "
             "bool=p2, uint:7=tb, uint:24=xnDot, uint:27=xn, uint:5=xnDotDot, "
@@ -814,7 +902,7 @@ class Rtcm3:
     __ssrMessages = {
         1057: {
             "header": (
-                "uint:12=messageNumber, uint:20=epochTime1s, "
+                "uint:12=messageType, uint:20=epochTime1s, "
                 "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
                 "bool=satelliteReferenceDatum, uint:4=iodSsr, uint:16=ssrProviderId, "
                 "uint:4=ssrSolutionId, uint:6=noOfSatellites"
@@ -828,7 +916,7 @@ class Rtcm3:
         },
         1058: {
             "header": (
-                "uint:12=messageNumber, uint:20=epochTime1s, "
+                "uint:12=messageType, uint:20=epochTime1s, "
                 "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
                 "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
                 "uint:6=noOfSatellites"
@@ -840,7 +928,7 @@ class Rtcm3:
         },
         1059: {
             "header": (
-                "uint:12=messageNumber, uint:20=epochTime1s, "
+                "uint:12=messageType, uint:20=epochTime1s, "
                 "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
                 "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
                 "uint:6=noOfSatellites"
@@ -850,7 +938,7 @@ class Rtcm3:
         },
         1060: {
             "header": (
-                "uint:12=messageNumber, uint:20=epochTime1s, "
+                "uint:12=messageType, uint:20=epochTime1s, "
                 "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
                 "bool=satelliteReferenceDatum, uint:4=iodSsr, uint:16=ssrProviderId, "
                 "uint:4=ssrSolutionId, uint:6=noOfSatellites"
@@ -865,7 +953,7 @@ class Rtcm3:
         },
         1061: {
             "header": (
-                "uint:12=messageNumber, uint:20=epochTime1s, "
+                "uint:12=messageType, uint:20=epochTime1s, "
                 "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
                 "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
                 "uint:6=noOfSatellites"
@@ -874,7 +962,7 @@ class Rtcm3:
         },
         1062: {
             "header": (
-                "uint:12=messageNumber, uint:20=epochTime1s, "
+                "uint:12=messageType, uint:20=epochTime1s, "
                 "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
                 "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
                 "uint:6=noOfSatellites"
@@ -883,7 +971,7 @@ class Rtcm3:
         },
         1063: {
             "header": (
-                "uint:12=messageNumber, uint:17=epochTime1s, "
+                "uint:12=messageType, uint:17=epochTime1s, "
                 "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
                 "bool=satelliteReferenceDatum, uint:4=iodSsr, uint:16=ssrProviderId, "
                 "uint:4=ssrSolutionId, uint:6=noOfSatellites"
@@ -897,7 +985,7 @@ class Rtcm3:
         },
         1064: {
             "header": (
-                "uint:12=messageNumber, uint:17=epochTime1s, "
+                "uint:12=messageType, uint:17=epochTime1s, "
                 "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
                 "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
                 "uint:6=noOfSatellites"
@@ -909,7 +997,7 @@ class Rtcm3:
         },
         1065: {
             "header": (
-                "uint:12=messageNumber, uint:17=epochTime1s, "
+                "uint:12=messageType, uint:17=epochTime1s, "
                 "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
                 "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
                 "uint:6=noOfSatellites"
@@ -919,7 +1007,7 @@ class Rtcm3:
         },
         1066: {
             "header": (
-                "uint:12=messageNumber, uint:17=epochTime1s, "
+                "uint:12=messageType, uint:17=epochTime1s, "
                 "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
                 "bool=satelliteReferenceDatum, uint:4=iodSsr, uint:16=ssrProviderId, "
                 "uint:4=ssrSolutionId, uint:6=noOfSatellites"
@@ -934,7 +1022,7 @@ class Rtcm3:
         },
         1067: {
             "header": (
-                "uint:12=messageNumber, uint:17=epochTime1s, "
+                "uint:12=messageType, uint:17=epochTime1s, "
                 "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
                 "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
                 "uint:6=noOfSatellites"
@@ -943,7 +1031,7 @@ class Rtcm3:
         },
         1068: {
             "header": (
-                "uint:12=messageNumber, uint:17=epochTime1s, "
+                "uint:12=messageType, uint:17=epochTime1s, "
                 "uint:4=ssrUpdateInterval, bool=multipleMessageIndicator, "
                 "uint:4=iodSsr, uint:16=ssrProviderId, uint:4=ssrSolutionId, "
                 "uint:6=noOfSatellites"
@@ -954,7 +1042,7 @@ class Rtcm3:
 
     # 1014 Network Auxiliary Station Data (Table 3.5-16, fixed 117 bits).
     __msg1014 = (
-        "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+        "uint:12=messageType, uint:8=networkId, uint:4=subnetworkId, "
         "uint:5=numberOfAuxiliaryStationsTra, "
         "uint:12=masterReferenceStationId, "
         "uint:12=auxiliaryReferenceStationId, int:20=auxMasterDeltaLatitude, "
@@ -968,7 +1056,7 @@ class Rtcm3:
     __networkMessages = {
         1015: {
             "header": (
-                "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+                "uint:12=messageType, uint:8=networkId, uint:4=subnetworkId, "
                 "uint:23=epochTimeGpsTow, bool=multipleMessageIndicator, "
                 "uint:12=masterReferenceStationId, "
                 "uint:12=auxiliaryReferenceStationId, uint:4=numOfGpsSats"
@@ -980,7 +1068,7 @@ class Rtcm3:
         },
         1016: {
             "header": (
-                "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+                "uint:12=messageType, uint:8=networkId, uint:4=subnetworkId, "
                 "uint:23=epochTimeGpsTow, bool=multipleMessageIndicator, "
                 "uint:12=masterReferenceStationId, "
                 "uint:12=auxiliaryReferenceStationId, uint:4=numOfGpsSats"
@@ -992,7 +1080,7 @@ class Rtcm3:
         },
         1017: {
             "header": (
-                "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+                "uint:12=messageType, uint:8=networkId, uint:4=subnetworkId, "
                 "uint:23=epochTimeGpsTow, bool=multipleMessageIndicator, "
                 "uint:12=masterReferenceStationId, "
                 "uint:12=auxiliaryReferenceStationId, uint:4=numOfGpsSats"
@@ -1004,7 +1092,7 @@ class Rtcm3:
         },
         1037: {
             "header": (
-                "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+                "uint:12=messageType, uint:8=networkId, uint:4=subnetworkId, "
                 "uint:20=networkEpochTime, bool=multipleMessageIndicator, "
                 "uint:12=masterReferenceStationId, "
                 "uint:12=auxiliaryReferenceStationId, uint:4=numOfGlonassDataEntries"
@@ -1013,7 +1101,7 @@ class Rtcm3:
         },
         1038: {
             "header": (
-                "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+                "uint:12=messageType, uint:8=networkId, uint:4=subnetworkId, "
                 "uint:20=networkEpochTime, bool=multipleMessageIndicator, "
                 "uint:12=masterReferenceStationId, "
                 "uint:12=auxiliaryReferenceStationId, uint:4=numOfGlonassDataEntries"
@@ -1025,7 +1113,7 @@ class Rtcm3:
         },
         1039: {
             "header": (
-                "uint:12=messageNumber, uint:8=networkId, uint:4=subnetworkId, "
+                "uint:12=messageType, uint:8=networkId, uint:4=subnetworkId, "
                 "uint:20=networkEpochTime, bool=multipleMessageIndicator, "
                 "uint:12=masterReferenceStationId, "
                 "uint:12=auxiliaryReferenceStationId, uint:4=numOfGlonassDataEntries"
@@ -1037,7 +1125,8 @@ class Rtcm3:
         },
         1030: {
             "header": (
-                "uint:12=messageNumber, uint:20=residualsEpochTimeTow, uint:7=nRefs, "
+                "uint:12=messageType, uint:20=residualsEpochTimeTow, "
+                "uint:12=referenceStationId, uint:7=nRefs, "
                 "uint:5=numberOfSatelliteSignalsProc"
             ),
             "sat": (
@@ -1047,7 +1136,8 @@ class Rtcm3:
         },
         1031: {
             "header": (
-                "uint:12=messageNumber, uint:17=residualsEpochTimeTk, uint:7=nRefs, "
+                "uint:12=messageType, uint:17=residualsEpochTimeTk, "
+                "uint:12=referenceStationId, uint:7=nRefs, "
                 "uint:5=df035"
             ),
             "sat": (
@@ -1057,7 +1147,7 @@ class Rtcm3:
         },
         1034: {
             "header": (
-                "uint:12=messageNumber, uint:12=referenceStationId, "
+                "uint:12=messageType, uint:12=referenceStationId, "
                 "uint:20=fkpEpochTimeTow, uint:5=df006"
             ),
             "sat": (
@@ -1068,7 +1158,7 @@ class Rtcm3:
         },
         1035: {
             "header": (
-                "uint:12=messageNumber, uint:12=referenceStationId, "
+                "uint:12=messageType, uint:12=referenceStationId, "
                 "uint:17=fkpEpochTime, uint:5=df035"
             ),
             "sat": (

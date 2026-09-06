@@ -413,8 +413,8 @@ class TestNetworkMessages(unittest.TestCase):
         1037: 73,
         1038: 73,
         1039: 73,
-        1030: 44,
-        1031: 41,
+        1030: 56,
+        1031: 53,
         1034: 49,
         1035: 46,
     }
@@ -433,6 +433,16 @@ class TestNetworkMessages(unittest.TestCase):
 
     def test_1014_fixed_width(self):
         self.assertEqual(format_bits(Rtcm3._Rtcm3__msg1014), 117)
+
+    def test_1032_fixed_width(self):
+        self.assertEqual(format_bits(Rtcm3._Rtcm3__msg1032), 156)
+
+    def test_1032_consumes_all_bits(self):
+        b = BitStream(uint=1032, length=12) + BitStream(length=156 - 12)
+        mtype, data = Rtcm3().decodeRtcmMessage(b)
+        self.assertEqual(mtype, 1032)
+        self.assertIsInstance(data[0], list)
+        self.assertEqual(b.pos, 156)
 
     def test_header_and_block_bit_totals(self):
         net = Rtcm3._Rtcm3__networkMessages
@@ -465,6 +475,64 @@ class TestNetworkMessages(unittest.TestCase):
                 self.assertEqual(mtype, mt)
                 self.assertEqual(len(data[1]), num_sats)
                 self.assertEqual(b.pos, total)
+
+
+class TestTransformationMessages(unittest.TestCase):
+    """Datum/transformation/projection messages 1021-1027 (RTCM 10403.3
+    Tables 3.5-24 .. 3.5-30)."""
+
+    FIXED_TOTALS = {1023: 578, 1024: 590, 1025: 196, 1026: 234, 1027: 258}
+
+    def test_projection_bit_totals(self):
+        tf = Rtcm3._Rtcm3__transformationFormats
+        for mt in (1025, 1026, 1027):  # no repeat groups -> format_bits is exact
+            self.assertEqual(format_bits(tf[mt]), self.FIXED_TOTALS[mt])
+
+    def test_1021_1022_tail_bit_totals(self):
+        # fixed part = message number (12) + two 5-bit counters + tail
+        self.assertEqual(
+            format_bits(Rtcm3._Rtcm3__msg1021_2Pre) 
+            + format_bits(Rtcm3._Rtcm3__msg1021_2Tail)
+            + 22,
+            412
+        )
+        self.assertEqual(
+            format_bits(Rtcm3._Rtcm3__msg1021_2Pre) 
+            + format_bits(Rtcm3._Rtcm3__msg102Body)
+            + format_bits(Rtcm3._Rtcm3__msg1021_2Tail) 
+            + 22, 
+            517
+        )
+
+    def test_fixed_messages_consume_all_bits(self):
+        rtcm = Rtcm3()
+        for mt, total in self.FIXED_TOTALS.items():
+            b = BitStream(uint=mt, length=12) + BitStream(length=total - 12)
+            mtype, data = rtcm.decodeRtcmMessage(b)
+            self.assertEqual(mtype, mt)
+            self.assertIsInstance(data[0], list)
+            self.assertEqual(b.pos, total)  # decoded exactly, no drift
+
+    def test_1021_1022_counted_strings(self):
+        rtcm = Rtcm3()
+        for mt, base in ((1021, 412), (1022, 517)):
+            src, tgt = b"WGS84", b"ETRS89"
+            b = (
+                BitStream(uint=mt, length=12)
+                + BitStream(uint=len(src), length=5)
+                + BitStream(bytes=src)
+                + BitStream(uint=len(tgt), length=5)
+                + BitStream(bytes=tgt)
+                + BitStream(length=base - 22)  # fixed tail
+            )
+            total = b.len
+            b.pos = 0
+            mtype, data = rtcm.decodeRtcmMessage(b)
+            head = data[0]
+            self.assertEqual(mtype, mt)
+            self.assertEqual(head[2], "WGS84")
+            self.assertEqual(head[4], "ETRS89")
+            self.assertEqual(b.pos, total)
 
 
 class TestLegacyRecordWidths(unittest.TestCase):
